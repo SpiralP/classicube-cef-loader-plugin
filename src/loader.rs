@@ -5,7 +5,7 @@ use classicube_sys::IGameComponent;
 use std::{cell::Cell, env, ffi::CString, io};
 use winapi::{
     shared::minwindef::HMODULE,
-    um::libloaderapi::{FreeLibrary, GetProcAddress, LoadLibraryA},
+    um::libloaderapi::{GetProcAddress, LoadLibraryA},
 };
 
 thread_local!(
@@ -92,12 +92,12 @@ pub fn free() {
     });
 
     LIBRARY.with(|cell| {
-        if let Some(library) = cell.get() {
+        if let Some(_library) = cell.get() {
             cell.set(None);
 
-            unsafe {
-                FreeLibrary(library);
-            }
+            // unsafe {
+            //     FreeLibrary(library);
+            // }
         }
     });
 }

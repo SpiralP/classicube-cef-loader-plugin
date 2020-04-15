@@ -8,6 +8,8 @@ pub const CEF_PLUGIN_PATH: &str = r"cef\classicube_cef_windows_amd64.dll";
 pub fn update_plugins() {
     fs::create_dir_all("cef").unwrap();
 
+    cef_binary_updater::prepare();
+
     AsyncManager::spawn(async move {
         let updater_plugin = GitHubReleaseChecker::new(
             "Cef Loader".to_string(),
@@ -34,5 +36,10 @@ pub fn update_plugins() {
         if let Err(e) = cef_binary_updater::check().await {
             print_async(format!("Failed to check updates: {}", e)).await;
         }
+
+        AsyncManager::spawn_on_main_thread(async {
+            println!("marked for shutdown");
+            AsyncManager::mark_for_shutdown();
+        });
     });
 }

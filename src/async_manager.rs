@@ -1,10 +1,13 @@
 use async_dispatcher::{Dispatcher, DispatcherHandle, LocalDispatcherHandle};
 use classicube_helpers::{tick::TickEventHandler, with_inner::WithInner};
-use std::future::Future;
-use tokio::task::JoinHandle;
-
 use lazy_static::lazy_static;
-use std::{cell::RefCell, sync::Mutex, time::Duration};
+use std::{
+    cell::{Cell, RefCell},
+    future::Future,
+    sync::Mutex,
+    time::Duration,
+};
+use tokio::task::JoinHandle;
 
 thread_local!(
     static ASYNC_DISPATCHER: RefCell<Option<Dispatcher>> = RefCell::new(None);
@@ -22,6 +25,10 @@ lazy_static! {
 lazy_static! {
     static ref TOKIO_RUNTIME: Mutex<Option<tokio::runtime::Runtime>> = Mutex::new(None);
 }
+
+thread_local!(
+    pub static SHOULD_SHUTDOWN: Cell<bool> = Cell::new(false);
+);
 
 pub struct AsyncManager {
     tick_handler: TickEventHandler,
@@ -88,6 +95,10 @@ impl AsyncManager {
         ASYNC_DISPATCHER.with_inner_mut(|async_dispatcher| {
             async_dispatcher.run_until_stalled();
         });
+    }
+
+    pub fn mark_for_shutdown() {
+        SHOULD_SHUTDOWN.with(|cell| cell.set(true));
     }
 
     #[allow(dead_code)]

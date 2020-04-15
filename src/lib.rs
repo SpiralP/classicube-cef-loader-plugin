@@ -5,20 +5,25 @@ mod github_release_checker;
 mod loader;
 mod plugin_updater;
 
-use crate::{async_manager::AsyncManager, plugin_updater::update_plugins};
+use crate::{
+    async_manager::{AsyncManager, SHOULD_SHUTDOWN},
+    plugin_updater::update_plugins,
+};
 use classicube_sys::IGameComponent;
 use std::{cell::RefCell, os::raw::c_int, ptr};
 
 thread_local!(
-    static ASYNC_MANAGER: RefCell<AsyncManager> = RefCell::new(AsyncManager::new());
+    static ASYNC_MANAGER: RefCell<Option<AsyncManager>> = RefCell::new(None);
 );
 
 extern "C" fn init() {
     println!("Init");
 
     ASYNC_MANAGER.with(|cell| {
-        let async_manager = &mut *cell.borrow_mut();
+        let option = &mut *cell.borrow_mut();
+        let mut async_manager = AsyncManager::new();
         async_manager.initialize();
+        *option = Some(async_manager);
     });
 
     update_plugins();
@@ -28,6 +33,18 @@ extern "C" fn init() {
 
 extern "C" fn on_new_map_loaded() {
     loader::on_new_map_loaded();
+
+    // TODO fix this!!
+    // I want to unload this plugin's async runtimes
+    if SHOULD_SHUTDOWN.with(|cell| cell.get()) {
+        SHOULD_SHUTDOWN.with(|cell| cell.set(false));
+        print("SHOULD_SHUTDOWN");
+        ASYNC_MANAGER.with(|cell| {
+            if let Some(mut async_manager) = cell.borrow_mut().take() {
+                async_manager.shutdown();
+            }
+        });
+    }
 }
 
 extern "C" fn free() {
@@ -36,8 +53,9 @@ extern "C" fn free() {
     loader::free();
 
     ASYNC_MANAGER.with(|cell| {
-        let async_manager = &mut *cell.borrow_mut();
-        async_manager.shutdown();
+        if let Some(mut async_manager) = cell.borrow_mut().take() {
+            async_manager.shutdown();
+        }
     });
 }
 

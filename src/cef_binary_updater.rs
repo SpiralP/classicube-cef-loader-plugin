@@ -10,6 +10,7 @@ use tokio::prelude::*;
 
 pub const CEF_VERSION: &str = "cef_binary_81.2.16+gdacda4f+chromium-81.0.4044.92_windows64_minimal";
 pub const CEF_BINARY_PATH: &str = r"cef\cef_binary";
+pub const CEF_BINARY_PATH_NEW: &str = r"cef\cef_binary-new";
 pub const CEF_BINARY_VERSION_PATH: &str = r"cef\cef_binary.txt";
 
 fn get_current_version() -> Option<String> {
@@ -22,13 +23,23 @@ fn get_current_version() -> Option<String> {
         .ok()
 }
 
+pub fn prepare() {
+    // cef's .bin files are locked hard so we can't do the flip/flop
+    if Path::new(CEF_BINARY_PATH_NEW).is_dir() {
+        if Path::new(CEF_BINARY_PATH).is_dir() {
+            fs::remove_dir_all(CEF_BINARY_PATH).unwrap();
+        }
+        fs::rename(CEF_BINARY_PATH_NEW, CEF_BINARY_PATH).unwrap();
+    }
+}
+
 pub async fn check() -> Result<()> {
     let current_version = get_current_version().unwrap_or_default();
 
     if current_version != CEF_VERSION {
         print_async(format!("Updating cef-binary to {}", CEF_VERSION)).await;
 
-        fs::create_dir_all(CEF_BINARY_PATH).unwrap();
+        fs::create_dir_all(CEF_BINARY_PATH_NEW).unwrap();
         download(CEF_VERSION).await?;
 
         {
@@ -132,9 +143,11 @@ async fn download(version: &str) -> Result<()> {
                     {
                         let even_more_trimmed: PathBuf = trimmed_path_components.collect();
                         // icu .dat and .bin files must be next to cef.dll
-                        let out_path = Path::new(CEF_BINARY_PATH).join(&even_more_trimmed);
+                        let out_path = Path::new(CEF_BINARY_PATH_NEW).join(&even_more_trimmed);
                         println!("{:?} {:?}", path, out_path);
-                        fs::create_dir_all(out_path.parent().unwrap())?;
+
+                        let parent = out_path.parent().unwrap();
+                        fs::create_dir_all(&parent)?;
                         file.unpack(&out_path)?;
                     }
                 }
