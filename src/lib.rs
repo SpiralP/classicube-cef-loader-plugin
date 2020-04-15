@@ -5,10 +5,7 @@ mod github_release_checker;
 mod loader;
 mod plugin_updater;
 
-use crate::{
-    async_manager::{AsyncManager, SHOULD_SHUTDOWN},
-    plugin_updater::update_plugins,
-};
+use crate::{async_manager::AsyncManager, plugin_updater::update_plugins};
 use classicube_sys::IGameComponent;
 use std::{cell::RefCell, os::raw::c_int, ptr};
 
@@ -35,16 +32,15 @@ extern "C" fn on_new_map_loaded() {
     loader::on_new_map_loaded();
 
     // TODO fix this!!
-    // I want to unload this plugin's async runtimes
-    if SHOULD_SHUTDOWN.with(|cell| cell.get()) {
-        SHOULD_SHUTDOWN.with(|cell| cell.set(false));
-        print("SHOULD_SHUTDOWN");
-        ASYNC_MANAGER.with(|cell| {
-            if let Some(mut async_manager) = cell.borrow_mut().take() {
-                async_manager.shutdown();
-            }
-        });
-    }
+    // I want to unload this plugin's async runtimes once we're done with updating
+    // if SHOULD_SHUTDOWN.with(|cell| cell.get()) {
+    //     SHOULD_SHUTDOWN.with(|cell| cell.set(false));
+    //     ASYNC_MANAGER.with(|cell| {
+    //         if let Some(mut async_manager) = cell.borrow_mut().take() {
+    //             async_manager.shutdown();
+    //         }
+    //     });
+    // }
 }
 
 extern "C" fn free() {

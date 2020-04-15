@@ -12,6 +12,7 @@ pub const CEF_VERSION: &str = "cef_binary_81.2.16+gdacda4f+chromium-81.0.4044.92
 pub const CEF_BINARY_PATH: &str = r"cef\cef_binary";
 pub const CEF_BINARY_PATH_NEW: &str = r"cef\cef_binary-new";
 pub const CEF_BINARY_VERSION_PATH: &str = r"cef\cef_binary.txt";
+pub const CEF_BINARY_VERSION_PATH_NEW: &str = r"cef\cef_binary.txt-new";
 
 fn get_current_version() -> Option<String> {
     fs::File::open(CEF_BINARY_VERSION_PATH)
@@ -25,15 +26,17 @@ fn get_current_version() -> Option<String> {
 
 pub fn prepare() {
     // cef's .bin files are locked hard so we can't do the flip/flop
-    if Path::new(CEF_BINARY_PATH_NEW).is_dir() {
+    if Path::new(CEF_BINARY_VERSION_PATH_NEW).is_file() && Path::new(CEF_BINARY_PATH_NEW).is_dir() {
         if Path::new(CEF_BINARY_PATH).is_dir() {
             fs::remove_dir_all(CEF_BINARY_PATH).unwrap();
         }
+        // mark as fully updated
         fs::rename(CEF_BINARY_PATH_NEW, CEF_BINARY_PATH).unwrap();
+        fs::rename(CEF_BINARY_VERSION_PATH_NEW, CEF_BINARY_VERSION_PATH).unwrap();
     }
 }
 
-pub async fn check() -> Result<()> {
+pub async fn check() -> Result<bool> {
     let current_version = get_current_version().unwrap_or_default();
 
     if current_version != CEF_VERSION {
@@ -43,16 +46,17 @@ pub async fn check() -> Result<()> {
         download(CEF_VERSION).await?;
 
         {
-            // mark as updated
-            let mut f = fs::File::create(CEF_BINARY_VERSION_PATH)?;
+            // mark as half-updated
+            let mut f = fs::File::create(CEF_BINARY_VERSION_PATH_NEW).unwrap();
             write!(f, "{}", CEF_VERSION).unwrap();
         }
 
-        print_async("cef-binary finished downloading, restart your game to finish the update!")
-            .await;
-    }
+        print_async("cef-binary finished downloading").await;
 
-    Ok(())
+        Ok(true)
+    } else {
+        Ok(false)
+    }
 }
 
 struct FuturesBlockOnReader<R>

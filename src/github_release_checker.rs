@@ -69,40 +69,33 @@ impl GitHubReleaseChecker {
         }
     }
 
-    pub async fn check(&self) -> Result<()> {
+    pub async fn check(&self) -> Result<bool> {
         let current_version = self.get_current_version().unwrap_or_default();
-        match self.get_latest_release().await {
-            Ok(release) => {
-                if &current_version != release.published_at.as_ref().unwrap() {
-                    print_async(format!(
-                        "New release update {} for {}!",
-                        release.tag_name.as_ref().unwrap(),
-                        self.name
-                    ))
-                    .await;
 
-                    self.update_assets(&release).await?;
+        let release = self.get_latest_release().await?;
 
-                    {
-                        // mark that we updated
-                        let mut f = fs::File::create(&self.version_path()).unwrap();
-                        write!(f, "{}", release.published_at.as_ref().unwrap()).unwrap();
-                    }
+        if &current_version != release.published_at.as_ref().unwrap() {
+            print_async(format!(
+                "New release update {} for {}!",
+                release.tag_name.as_ref().unwrap(),
+                self.name
+            ))
+            .await;
 
-                    print_async(format!(
-                        "{} finished downloading, restart your game to finish the update!",
-                        self.name
-                    ))
-                    .await;
-                }
+            self.update_assets(&release).await?;
+
+            {
+                // mark that we updated
+                let mut f = fs::File::create(&self.version_path()).unwrap();
+                write!(f, "{}", release.published_at.as_ref().unwrap()).unwrap();
             }
 
-            Err(e) => {
-                print_async(format!("Couldn't get release for {}: {}", self.repo, e)).await;
-            }
+            print_async(format!("{} finished downloading", self.name)).await;
+
+            Ok(true)
+        } else {
+            Ok(false)
         }
-
-        Ok(())
     }
 
     async fn update_assets(&self, release: &GitHubRelease) -> Result<()> {
