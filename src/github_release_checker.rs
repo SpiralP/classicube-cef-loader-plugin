@@ -61,17 +61,23 @@ impl GitHubReleaseChecker {
     async fn get_latest_release(&self) -> Result<GitHubRelease> {
         let client = Self::make_client();
 
-        Ok(client.get(&self.url()).send().await?.json().await?)
+        let release: GitHubRelease = client.get(&self.url()).send().await?.json().await?;
+        if let Some(err) = release.message {
+            Err(err.into())
+        } else {
+            Ok(release)
+        }
     }
 
     pub async fn check(&self) -> Result<()> {
         let current_version = self.get_current_version().unwrap_or_default();
         match self.get_latest_release().await {
             Ok(release) => {
-                if current_version != release.published_at {
+                if &current_version != release.published_at.as_ref().unwrap() {
                     print_async(format!(
                         "New release update {} for {}!",
-                        release.tag_name, self.name
+                        release.tag_name.as_ref().unwrap(),
+                        self.name
                     ))
                     .await;
 
@@ -80,7 +86,7 @@ impl GitHubReleaseChecker {
                     {
                         // mark that we updated
                         let mut f = fs::File::create(&self.version_path()).unwrap();
-                        write!(f, "{}", release.published_at).unwrap();
+                        write!(f, "{}", release.published_at.as_ref().unwrap()).unwrap();
                     }
 
                     print_async(format!(
@@ -105,6 +111,8 @@ impl GitHubReleaseChecker {
 
             let asset = release
                 .assets
+                .as_ref()
+                .unwrap()
                 .iter()
                 .find(|asset| asset.name == asset_name)
                 .chain_err(|| format!("couldn't find asset {}", asset_name))?;
@@ -154,9 +162,12 @@ impl GitHubReleaseChecker {
 
 #[derive(Deserialize)]
 struct GitHubRelease {
-    tag_name: String,
-    assets: Vec<GitHubReleaseAsset>,
-    published_at: String,
+    /// error message
+    message: Option<String>,
+
+    tag_name: Option<String>,
+    assets: Option<Vec<GitHubReleaseAsset>>,
+    published_at: Option<String>,
 }
 
 #[derive(Deserialize)]
