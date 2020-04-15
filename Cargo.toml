@@ -8,4 +8,16 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
+async-dispatcher = { git = "https://github.com/SpiralP/rust-async-dispatcher.git" }
+bzip2 = { version = "0.3.3", features = ["tokio"] }
+classicube-helpers = { git = "https://github.com/SpiralP/rust-classicube-helpers.git" }
 classicube-sys = { git = "https://github.com/SpiralP/rust-classicube-sys.git" }
+error-chain = "0.12.2"
+futures = { version = "0.3.4", features = ["compat", "io-compat"] }
+lazy_static = "1.4.0"
+reqwest = { version = "0.10.4", features = ["json", "stream"] }
+serde = { version = "1.0", features = ["derive"] }
+tar = "0.4.26"
+tokio = { version = "0.2.18", features = ["full"] }
+tokio-util = { version = "0.3.1", features = ["compat"] }
+winapi = { version = "0.3.8", features = ["libloaderapi"] }
