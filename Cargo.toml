@@ -12,9 +12,11 @@ async-dispatcher = { git = "https://github.com/SpiralP/rust-async-dispatcher.git
 bzip2 = { version = "0.3.3", features = ["tokio"] }
 classicube-helpers = { git = "https://github.com/SpiralP/rust-classicube-helpers.git" }
 classicube-sys = { git = "https://github.com/SpiralP/rust-classicube-sys.git" }
+env_logger = "0.7.1"
 error-chain = "0.12.2"
 futures = { version = "0.3.4", features = ["compat", "io-compat"] }
 lazy_static = "1.4.0"
+log = "0.4.8"
 reqwest = { version = "0.10.4", features = ["json", "stream"] }
 serde = { version = "1.0", features = ["derive"] }
 tar = "0.4.26"

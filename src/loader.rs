@@ -2,6 +2,7 @@ use crate::{
     cef_binary_updater::CEF_BINARY_PATH, error::*, plugin_updater::CEF_PLUGIN_PATH, print,
 };
 use classicube_sys::IGameComponent;
+use log::debug;
 use std::{cell::Cell, env, ffi::CString, io};
 use winapi::{
     shared::minwindef::HMODULE,
@@ -48,6 +49,7 @@ fn try_init() -> Result<()> {
     let plugin_component = unsafe { &mut *plugin_component };
 
     if let Some(f) = plugin_component.Init {
+        debug!("Calling Init");
         unsafe {
             f();
         }
@@ -68,6 +70,7 @@ pub fn on_new_map_loaded() {
             let plugin_component = unsafe { &mut *plugin_component };
 
             if let Some(f) = plugin_component.OnNewMapLoaded {
+                debug!("Calling OnNewMapLoaded");
                 unsafe {
                     f();
                 }
@@ -84,6 +87,7 @@ pub fn free() {
             let plugin_component = unsafe { &mut *plugin_component };
 
             if let Some(f) = plugin_component.Free {
+                debug!("Calling Free");
                 unsafe {
                     f();
                 }

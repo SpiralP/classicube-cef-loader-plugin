@@ -1,5 +1,6 @@
 use crate::{error::*, print_async};
 use futures::stream::TryStreamExt;
+use log::debug;
 use std::{
     fs, io,
     io::{Read, Write},
@@ -148,7 +149,7 @@ async fn download(version: &str) -> Result<()> {
                         let even_more_trimmed: PathBuf = trimmed_path_components.collect();
                         // icu .dat and .bin files must be next to cef.dll
                         let out_path = Path::new(CEF_BINARY_PATH_NEW).join(&even_more_trimmed);
-                        println!("{:?} {:?}", path, out_path);
+                        debug!("{:?} {:?}", path, out_path);
 
                         let parent = out_path.parent().unwrap();
                         fs::create_dir_all(&parent)?;

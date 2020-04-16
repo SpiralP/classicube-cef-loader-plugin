@@ -68,7 +68,7 @@ pub fn update_plugins() {
         }
 
         // AsyncManager::spawn_on_main_thread(async {
-        //     println!("marked for shutdown");
+        //     debug!("marked for shutdown");
         //     AsyncManager::mark_for_shutdown();
         // });
     });

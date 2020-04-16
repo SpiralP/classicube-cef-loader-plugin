@@ -3,10 +3,12 @@ mod cef_binary_updater;
 mod error;
 mod github_release_checker;
 mod loader;
+mod logger;
 mod plugin_updater;
 
 use crate::{async_manager::AsyncManager, plugin_updater::update_plugins};
 use classicube_sys::IGameComponent;
+use log::debug;
 use std::{cell::RefCell, os::raw::c_int, ptr};
 
 thread_local!(
@@ -14,7 +16,9 @@ thread_local!(
 );
 
 extern "C" fn init() {
-    println!("Init");
+    logger::initialize(true, false);
+
+    debug!("Init");
 
     ASYNC_MANAGER.with(|cell| {
         let option = &mut *cell.borrow_mut();
@@ -44,7 +48,7 @@ extern "C" fn on_new_map_loaded() {
 }
 
 extern "C" fn free() {
-    println!("Free");
+    debug!("Free");
 
     loader::free();
 
@@ -78,7 +82,7 @@ pub fn print<S: Into<String>>(s: S) {
     use classicube_sys::{Chat_Add, OwnedString};
 
     let s = s.into();
-    println!("{}", s);
+    debug!("{}", s);
 
     let owned_string = OwnedString::new(s);
 
