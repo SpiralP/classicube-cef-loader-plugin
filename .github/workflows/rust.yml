@@ -34,11 +34,13 @@ jobs:
       - name: Build
         uses: actions-rs/cargo@v1
         with:
+          target: ${{ matrix.arch }}-pc-windows-msvc
           command: build
 
       - name: Test
         uses: actions-rs/cargo@v1
         with:
+          target: ${{ matrix.arch }}-pc-windows-msvc
           command: test
           args: -- --nocapture
 
@@ -46,6 +48,7 @@ jobs:
         uses: actions-rs/cargo@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          target: ${{ matrix.arch }}-pc-windows-msvc
           command: build
           args: --release
 
