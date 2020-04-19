@@ -3,14 +3,14 @@ on: [push]
 
 jobs:
   buildForSomePlatforms:
-    name: Build Windows ${{ matrix.arch }}
+    name: Build Windows ${{ matrix.config.arch }}
     runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
-        arch:
-          - x86_64
-          - i686
+        config:
+          - { arch: x86_64, bits: 64 }
+          - { arch: i686, bits: 32 }
 
     steps:
       - uses: actions/checkout@v2
@@ -21,28 +21,28 @@ jobs:
           echo "##[add-path]$HOME\scoop\shims"
           echo "##[add-path]C:\ProgramData\scoop\shims"
           scoop install aria2
-          scoop install llvm
+          scoop install --arch ${{ matrix.config.bits }}bit llvm
           echo "::set-env name=LIBCLANG_PATH::$HOME\scoop\apps\llvm\current\bin"
 
       - name: Install nightly
         uses: actions-rs/toolchain@v1
         with:
-          target: ${{ matrix.arch }}-pc-windows-msvc
-          toolchain: nightly-${{ matrix.arch }}-pc-windows-msvc
+          target: ${{ matrix.config.arch }}-pc-windows-msvc
+          toolchain: nightly-${{ matrix.config.arch }}-pc-windows-msvc
           override: true
 
       - name: Build
         uses: actions-rs/cargo@v1
         if: startsWith(github.ref, 'refs/tags/') != true
         with:
-          target: ${{ matrix.arch }}-pc-windows-msvc
+          target: ${{ matrix.config.arch }}-pc-windows-msvc
           command: build
 
       - name: Test
         uses: actions-rs/cargo@v1
         if: startsWith(github.ref, 'refs/tags/') != true
         with:
-          target: ${{ matrix.arch }}-pc-windows-msvc
+          target: ${{ matrix.config.arch }}-pc-windows-msvc
           command: test
           args: -- --nocapture
 
@@ -50,18 +50,18 @@ jobs:
         uses: actions-rs/cargo@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          target: ${{ matrix.arch }}-pc-windows-msvc
+          target: ${{ matrix.config.arch }}-pc-windows-msvc
           command: build
           args: --release
 
-      - run: Rename-Item -Path "target\release\classicube_cef_loader_plugin.dll" -NewName "classicube_cef_loader_windows_${{ matrix.arch }}.dll"
+      - run: Rename-Item -Path "target\release\classicube_cef_loader_plugin.dll" -NewName "classicube_cef_loader_windows_${{ matrix.config.arch }}.dll"
         if: startsWith(github.ref, 'refs/tags/')
 
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: target/release/classicube_cef_loader_windows_${{ matrix.arch }}.dll
+          files: target/release/classicube_cef_loader_windows_${{ matrix.config.arch }}.dll
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #
