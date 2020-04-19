@@ -59,8 +59,6 @@ pub fn update_plugins() {
             Ok(updated) => {
                 if updated {
                     had_updates = true;
-                    // cef needs to see exact "cefsimple.exe" :(
-                    std::fs::rename(CEF_SIMPLE_PATH, r"cef\cefsimple.exe").unwrap();
                 }
             }
 

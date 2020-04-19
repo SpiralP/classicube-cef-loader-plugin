@@ -1,9 +1,12 @@
 use crate::{
-    cef_binary_updater::CEF_BINARY_PATH, error::*, plugin_updater::CEF_PLUGIN_PATH, print,
+    cef_binary_updater::CEF_BINARY_PATH,
+    error::*,
+    plugin_updater::{CEF_PLUGIN_PATH, CEF_SIMPLE_PATH},
+    print,
 };
 use classicube_sys::IGameComponent;
 use log::debug;
-use std::{cell::Cell, env, ffi::CString, io};
+use std::{cell::Cell, env, ffi::CString, fs, io, path::Path};
 use winapi::{
     shared::minwindef::HMODULE,
     um::libloaderapi::{GetProcAddress, LoadLibraryA},
@@ -26,6 +29,15 @@ fn ptr_result<T>(ptr: *mut T) -> Result<*mut T> {
 }
 
 fn try_init() -> Result<()> {
+    // copy cefsimple-arch.exe to cefsimple.exe
+    fs::copy(
+        CEF_SIMPLE_PATH,
+        Path::new(CEF_SIMPLE_PATH)
+            .parent()
+            .unwrap()
+            .join("cefsimple.exe"),
+    )?;
+
     // add cef/cef_binary and cef/ to PATH so that cef.dll is found,
     // and cefsimple.exe can run
     let path = env::var("PATH").unwrap();
