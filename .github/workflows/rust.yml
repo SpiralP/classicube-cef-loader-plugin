@@ -2,8 +2,15 @@ name: Rust
 on: [push]
 
 jobs:
-  windows:
+  buildForSomePlatforms:
+    name: Build Windows ${{ matrix.arch }}
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - x86_64
+          - i686
 
     steps:
       - uses: actions/checkout@v2
@@ -20,6 +27,7 @@ jobs:
       - name: Install nightly
         uses: actions-rs/toolchain@v1
         with:
+          target: ${{ matrix.arch }}-pc-windows-msvc
           toolchain: nightly
           override: true
 
@@ -41,14 +49,14 @@ jobs:
           command: build
           args: --release
 
-      - run: Rename-Item -Path "target\release\classicube_cef_loader_plugin.dll" -NewName "classicube_cef_loader_windows_amd64.dll"
+      - run: Rename-Item -Path "target\release\classicube_cef_loader_plugin.dll" -NewName "classicube_cef_loader_windows_${{ matrix.arch }}.dll"
         if: startsWith(github.ref, 'refs/tags/')
 
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: target/release/classicube_cef_loader_windows_amd64.dll
+          files: target/release/classicube_cef_loader_windows_${{ matrix.arch }}.dll
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #

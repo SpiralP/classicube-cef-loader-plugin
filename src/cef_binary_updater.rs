@@ -9,7 +9,28 @@ use std::{
 };
 use tokio::prelude::*;
 
-pub const CEF_VERSION: &str = "cef_binary_81.2.16+gdacda4f+chromium-81.0.4044.92_windows64_minimal";
+macro_rules! cef_version {
+    () => {
+        "cef_binary_81.2.16+gdacda4f+chromium-81.0.4044.92_"
+    };
+}
+
+#[cfg(all(target_os = "windows", target_pointer_width = "64"))]
+macro_rules! cef_arch {
+    () => {
+        "windows64"
+    };
+}
+
+#[cfg(all(target_os = "windows", target_pointer_width = "32"))]
+macro_rules! cef_arch {
+    () => {
+        "windows32"
+    };
+}
+
+pub const CEF_VERSION: &str = concat!(cef_version!(), cef_arch!(), "_minimal");
+
 pub const CEF_BINARY_PATH: &str = r"cef\cef_binary";
 pub const CEF_BINARY_PATH_NEW: &str = r"cef\cef_binary-new";
 pub const CEF_BINARY_VERSION_PATH: &str = r"cef\cef_binary.txt";
