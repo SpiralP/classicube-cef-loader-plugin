@@ -3,7 +3,17 @@ use crate::{
 };
 use std::fs;
 
-pub const CEF_PLUGIN_PATH: &str = r"cef\classicube_cef_windows_amd64.dll";
+#[cfg(all(target_os = "windows", target_pointer_width = "64"))]
+pub const CEF_PLUGIN_PATH: &str = r"cef\classicube_cef_windows_.dll";
+
+#[cfg(all(target_os = "windows", target_pointer_width = "64"))]
+pub const CEF_PLUGIN_LOADER_PATH: &str = r"plugins\classicube_cef_loader_windows_amd64.dll";
+
+#[cfg(all(target_os = "windows", target_pointer_width = "32"))]
+pub const CEF_PLUGIN_PATH: &str = r"cef\classicube_cef_windows_i686.dll";
+
+#[cfg(all(target_os = "windows", target_pointer_width = "32"))]
+pub const CEF_PLUGIN_LOADER_PATH: &str = r"plugins\classicube_cef_loader_windows_i686.dll";
 
 pub fn update_plugins() {
     fs::create_dir_all("cef").unwrap();
@@ -17,7 +27,7 @@ pub fn update_plugins() {
             "Cef Loader".to_string(),
             "SpiralP".to_string(),
             "rust-classicube-cef-loader-plugin".to_string(),
-            vec![r"plugins\classicube_cef_loader_windows_amd64.dll".into()],
+            vec![CEF_PLUGIN_LOADER_PATH.into()],
         );
 
         match loader_plugin.check().await {
