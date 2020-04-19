@@ -9,11 +9,17 @@ pub const CEF_PLUGIN_PATH: &str = r"cef\classicube_cef_windows_x86_64.dll";
 #[cfg(all(target_os = "windows", target_pointer_width = "64"))]
 pub const CEF_PLUGIN_LOADER_PATH: &str = r"plugins\classicube_cef_loader_windows_x86_64.dll";
 
+#[cfg(all(target_os = "windows", target_pointer_width = "64"))]
+pub const CEF_SIMPLE_PATH: &str = r"cef\cefsimple-x86_64.exe";
+
 #[cfg(all(target_os = "windows", target_pointer_width = "32"))]
 pub const CEF_PLUGIN_PATH: &str = r"cef\classicube_cef_windows_i686.dll";
 
 #[cfg(all(target_os = "windows", target_pointer_width = "32"))]
 pub const CEF_PLUGIN_LOADER_PATH: &str = r"plugins\classicube_cef_loader_windows_i686.dll";
+
+#[cfg(all(target_os = "windows", target_pointer_width = "32"))]
+pub const CEF_SIMPLE_PATH: &str = r"cef\cefsimple-i686.exe";
 
 pub fn update_plugins() {
     fs::create_dir_all("cef").unwrap();
@@ -46,13 +52,15 @@ pub fn update_plugins() {
             "Cef".to_string(),
             "SpiralP".to_string(),
             "rust-classicube-cef-plugin".to_string(),
-            vec![CEF_PLUGIN_PATH.into(), r"cef\cefsimple.exe".into()],
+            vec![CEF_PLUGIN_PATH.into(), CEF_SIMPLE_PATH.into()],
         );
 
         match cef_plugin.check().await {
             Ok(updated) => {
                 if updated {
                     had_updates = true;
+                    // cef needs to see exact "cefsimple.exe" :(
+                    std::fs::rename(CEF_SIMPLE_PATH, r"cef\cefsimple.exe").unwrap();
                 }
             }
 
