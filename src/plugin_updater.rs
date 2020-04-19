@@ -4,10 +4,10 @@ use crate::{
 use std::fs;
 
 #[cfg(all(target_os = "windows", target_pointer_width = "64"))]
-pub const CEF_PLUGIN_PATH: &str = r"cef\classicube_cef_windows_.dll";
+pub const CEF_PLUGIN_PATH: &str = r"cef\classicube_cef_windows_x86_64.dll";
 
 #[cfg(all(target_os = "windows", target_pointer_width = "64"))]
-pub const CEF_PLUGIN_LOADER_PATH: &str = r"plugins\classicube_cef_loader_windows_amd64.dll";
+pub const CEF_PLUGIN_LOADER_PATH: &str = r"plugins\classicube_cef_loader_windows_x86_64.dll";
 
 #[cfg(all(target_os = "windows", target_pointer_width = "32"))]
 pub const CEF_PLUGIN_PATH: &str = r"cef\classicube_cef_windows_i686.dll";
