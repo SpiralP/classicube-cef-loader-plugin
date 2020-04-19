@@ -11,7 +11,7 @@ use tokio::prelude::*;
 
 macro_rules! cef_version {
     () => {
-        "cef_binary_81.2.16+gdacda4f+chromium-81.0.4044.92_"
+        "cef_binary_81.2.17+gb382c62+chromium-81.0.4044.113"
     };
 }
 
@@ -29,7 +29,7 @@ macro_rules! cef_arch {
     };
 }
 
-pub const CEF_VERSION: &str = concat!(cef_version!(), cef_arch!(), "_minimal");
+pub const CEF_VERSION: &str = concat!(cef_version!(), "_", cef_arch!(), "_minimal");
 
 pub const CEF_BINARY_PATH: &str = r"cef\cef_binary";
 pub const CEF_BINARY_PATH_NEW: &str = r"cef\cef_binary-new";
