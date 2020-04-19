@@ -28,17 +28,19 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           target: ${{ matrix.arch }}-pc-windows-msvc
-          toolchain: nightly
+          toolchain: nightly-${{ matrix.arch }}-pc-windows-msvc
           override: true
 
       - name: Build
         uses: actions-rs/cargo@v1
+        if: startsWith(github.ref, 'refs/tags/') != true
         with:
           target: ${{ matrix.arch }}-pc-windows-msvc
           command: build
 
       - name: Test
         uses: actions-rs/cargo@v1
+        if: startsWith(github.ref, 'refs/tags/') != true
         with:
           target: ${{ matrix.arch }}-pc-windows-msvc
           command: test
