@@ -72,7 +72,12 @@ fn try_init() -> Result<()> {
 
 pub fn init() {
     if let Err(e) = try_init() {
-        print(format!("Couldn't load cef plugin: {}", e));
+        print(format!(
+            "{}Couldn't load cef plugin: {}{}",
+            classicube_helpers::color::RED,
+            classicube_helpers::color::WHITE,
+            e
+        ));
     }
 }
 

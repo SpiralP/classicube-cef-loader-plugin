@@ -1,4 +1,5 @@
 use crate::{error::*, print_async};
+use classicube_helpers::color;
 use futures::stream::TryStreamExt;
 use log::debug;
 use std::{
@@ -62,7 +63,15 @@ pub async fn check() -> Result<bool> {
     let current_version = get_current_version().unwrap_or_default();
 
     if current_version != CEF_VERSION {
-        print_async(format!("Updating cef-binary to {}", CEF_VERSION)).await;
+        print_async(format!(
+            "{}Updating {}cef-binary {}to {}{}",
+            color::PINK,
+            color::LIME,
+            color::PINK,
+            color::GREEN,
+            CEF_VERSION
+        ))
+        .await;
 
         fs::create_dir_all(CEF_BINARY_PATH_NEW).unwrap();
         download(CEF_VERSION).await?;
@@ -73,7 +82,7 @@ pub async fn check() -> Result<bool> {
             write!(f, "{}", CEF_VERSION).unwrap();
         }
 
-        print_async("cef-binary finished downloading").await;
+        print_async(format!("{}cef-binary finished downloading", color::LIME,)).await;
 
         Ok(true)
     } else {

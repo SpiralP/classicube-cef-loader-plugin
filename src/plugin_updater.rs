@@ -1,6 +1,7 @@
 use crate::{
     cef_binary_updater, github_release_checker::GitHubReleaseChecker, print_async, AsyncManager,
 };
+use classicube_helpers::color;
 use std::fs;
 
 #[cfg(all(target_os = "windows", target_pointer_width = "64"))]
@@ -80,7 +81,11 @@ pub fn update_plugins() {
         }
 
         if had_updates {
-            print_async("Everything done, restart your game to finish the update!").await;
+            print_async(format!(
+                "{}Everything done, restart your game to finish the update!",
+                color::YELLOW
+            ))
+            .await;
         }
 
         // AsyncManager::spawn_on_main_thread(async {

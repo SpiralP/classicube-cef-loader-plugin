@@ -1,4 +1,5 @@
 use crate::{error::*, print_async};
+use classicube_helpers::color;
 use futures::stream::TryStreamExt;
 use serde::Deserialize;
 use std::{
@@ -76,8 +77,12 @@ impl GitHubReleaseChecker {
 
         if &current_version != release.published_at.as_ref().unwrap() {
             print_async(format!(
-                "New release update {} for {}!",
+                "{}New release update {}{} {}for {}{}!",
+                color::PINK,
+                color::GREEN,
                 release.tag_name.as_ref().unwrap(),
+                color::PINK,
+                color::LIME,
                 self.name
             ))
             .await;
@@ -90,7 +95,7 @@ impl GitHubReleaseChecker {
                 write!(f, "{}", release.published_at.as_ref().unwrap()).unwrap();
             }
 
-            print_async(format!("{} finished downloading", self.name)).await;
+            print_async(format!("{}{} finished downloading", color::LIME, self.name)).await;
 
             Ok(true)
         } else {
@@ -111,9 +116,16 @@ impl GitHubReleaseChecker {
                 .chain_err(|| format!("couldn't find asset {}", asset_name))?;
 
             print_async(format!(
-                "Downloading {} ({}MB)",
+                "{}Downloading {}{} {}({}{}MB{})",
+                color::GOLD,
+                //
+                color::GREEN,
                 asset.name,
-                (asset.size as f32 / 1024f32 / 1024f32).ceil() as u32
+                color::GOLD,
+                //
+                color::GREEN,
+                (asset.size as f32 / 1024f32 / 1024f32).ceil() as u32,
+                color::GOLD,
             ))
             .await;
 
@@ -146,7 +158,13 @@ impl GitHubReleaseChecker {
             // rename downloaded to wanted_path
             fs::rename(&new_path, &wanted_path)?;
 
-            print_async(format!("Finished downloading {}", asset.name)).await;
+            print_async(format!(
+                "{}Finished downloading {}{}",
+                color::GOLD,
+                color::GREEN,
+                asset.name,
+            ))
+            .await;
         }
 
         Ok(())
