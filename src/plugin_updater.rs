@@ -45,7 +45,13 @@ pub fn update_plugins() {
             }
 
             Err(e) => {
-                print_async(format!("Failed to update: {}", e)).await;
+                print_async(format!(
+                    "{}Failed to update: {}{}",
+                    classicube_helpers::color::RED,
+                    classicube_helpers::color::WHITE,
+                    e
+                ))
+                .await;
             }
         }
 
@@ -64,7 +70,13 @@ pub fn update_plugins() {
             }
 
             Err(e) => {
-                print_async(format!("Failed to update: {}", e)).await;
+                print_async(format!(
+                    "{}Failed to update: {}{}",
+                    classicube_helpers::color::RED,
+                    classicube_helpers::color::WHITE,
+                    e
+                ))
+                .await;
             }
         }
 
@@ -76,7 +88,13 @@ pub fn update_plugins() {
             }
 
             Err(e) => {
-                print_async(format!("Failed to update: {}", e)).await;
+                print_async(format!(
+                    "{}Failed to update: {}{}",
+                    classicube_helpers::color::RED,
+                    classicube_helpers::color::WHITE,
+                    e
+                ))
+                .await;
             }
         }
 
