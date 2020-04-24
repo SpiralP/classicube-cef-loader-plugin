@@ -1,5 +1,5 @@
 use async_dispatcher::{Dispatcher, DispatcherHandle, LocalDispatcherHandle};
-use classicube_helpers::{tick::TickEventHandler, with_inner::WithInner};
+use classicube_helpers::{tick::TickEventHandler, OptionWithInner};
 use lazy_static::lazy_static;
 use log::debug;
 use std::{cell::RefCell, future::Future, sync::Mutex, time::Duration};
@@ -84,9 +84,11 @@ impl AsyncManager {
 
     fn step() {
         // process futures
-        ASYNC_DISPATCHER.with_inner_mut(|async_dispatcher| {
-            async_dispatcher.run_until_stalled();
-        });
+        ASYNC_DISPATCHER
+            .with_inner_mut(|async_dispatcher| {
+                async_dispatcher.run_until_stalled();
+            })
+            .unwrap();
     }
 
     #[allow(dead_code)]
