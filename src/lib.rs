@@ -27,8 +27,14 @@ extern "C" fn init() {
         *option = Some(async_manager);
     });
 
+    // never update if debug build
     #[cfg(not(debug_assertions))]
     update_plugins();
+
+    #[cfg(debug_assertions)]
+    if false {
+        update_plugins();
+    }
 
     loader::init();
 }
