@@ -10,8 +10,7 @@ Loader plugin for [classicube-cef-plugin](https://github.com/SpiralP/rust-classi
 
 ## Installing
 
-- Download the latest plugin from GitHub Releases
-  - https://github.com/SpiralP/rust-classicube-cef-loader-plugin/releases/latest
-  - i686 for 32 bit ClassiCube (steam version)
-  - x86_64 for 64 bit ClassiCube
+- Download the latest plugin from GitHub [Releases](https://github.com/SpiralP/rust-classicube-cef-loader-plugin/releases/latest)
+  - [classicube_cef_loader_windows_i686.dll](https://github.com/SpiralP/rust-classicube-cef-loader-plugin/releases/latest/download/classicube_cef_loader_windows_i686.dll) for 32 bit ClassiCube (steam version)
+  - [classicube_cef_loader_windows_x86_64.dll](https://github.com/SpiralP/rust-classicube-cef-loader-plugin/releases/latest/download/classicube_cef_loader_windows_x86_64.dll) for 64 bit ClassiCube
 - Put the dll into the `plugins` folder where `ClassiCube.exe` lives
