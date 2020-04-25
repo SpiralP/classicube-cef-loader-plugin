@@ -4,7 +4,7 @@ Loader plugin for [classicube-cef-plugin](https://github.com/SpiralP/rust-classi
 
 ## Requirements
 
-- 64 bit version of ClassiCube
+- Windows
 - The latest Microsoft Visual C++ Redistributable
   - https://aka.ms/vs/16/release/vc_redist.x64.exe
 
@@ -12,4 +12,6 @@ Loader plugin for [classicube-cef-plugin](https://github.com/SpiralP/rust-classi
 
 - Download the latest plugin from GitHub Releases
   - https://github.com/SpiralP/rust-classicube-cef-loader-plugin/releases/latest
+  - i686 for 32 bit ClassiCube (steam version)
+  - x86_64 for 64 bit ClassiCube
 - Put the dll into the `plugins` folder where `ClassiCube.exe` lives
