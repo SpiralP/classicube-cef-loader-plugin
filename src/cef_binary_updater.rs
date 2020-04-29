@@ -1,12 +1,17 @@
-use crate::{error::*, print_async};
+use crate::{async_manager::AsyncManager, error::*, print_async, status};
 use classicube_helpers::color;
-use futures::stream::TryStreamExt;
+use futures::stream::{StreamExt, TryStreamExt};
 use log::debug;
 use std::{
     fs, io,
     io::{Read, Write},
     marker::Unpin,
     path::{Component, Path, PathBuf},
+    sync::{
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+        Arc,
+    },
+    time::Duration,
 };
 use tokio::prelude::*;
 
@@ -116,7 +121,50 @@ async fn download(version: &str) -> Result<()> {
     )
     .replace("+", "%2B");
 
-    let stream = reqwest::get(&url).await?.bytes_stream();
+    let running = Arc::new(AtomicBool::new(true));
+    let downloaded = Arc::new(AtomicUsize::new(0usize));
+    let response = reqwest::get(&url).await?;
+
+    {
+        let maybe_content_length = response.content_length();
+        let running = running.clone();
+        let downloaded = downloaded.clone();
+
+        AsyncManager::spawn_on_main_thread(async move {
+            while running.load(Ordering::SeqCst) {
+                let downloaded = downloaded.load(Ordering::SeqCst);
+
+                let message = if let Some(content_length) = maybe_content_length {
+                    format!(
+                        "{:.2}%",
+                        (downloaded as f32 / content_length as f32) * 100.0
+                    )
+                } else {
+                    format!("{} bytes", downloaded)
+                };
+
+                status(format!(
+                    "{}Downloading ({}{}{})",
+                    color::PINK,
+                    color::LIME,
+                    message,
+                    color::PINK,
+                ));
+
+                AsyncManager::sleep(Duration::from_secs(1)).await;
+            }
+        });
+    }
+
+    let stream = response
+        .bytes_stream()
+        .inspect(move |result| {
+            if let Ok(bytes) = result {
+                let len = bytes.len();
+                downloaded.fetch_add(len, Ordering::SeqCst);
+            }
+        })
+        .boxed();
 
     let stream =
         tokio::io::stream_reader(stream.map_err(|e| io::Error::new(io::ErrorKind::Other, e)));
@@ -192,6 +240,13 @@ async fn download(version: &str) -> Result<()> {
         Ok::<(), Error>(())
     })
     .await??;
+
+    running.store(false, Ordering::SeqCst);
+
+    AsyncManager::run_on_main_thread(async {
+        status("");
+    })
+    .await;
 
     Ok(())
 }

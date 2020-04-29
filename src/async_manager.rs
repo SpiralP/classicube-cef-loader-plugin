@@ -34,6 +34,8 @@ impl AsyncManager {
     }
 
     pub fn initialize(&mut self) {
+        debug!("initialize async_manager");
+
         let async_dispatcher = Dispatcher::new();
         *ASYNC_DISPATCHER_HANDLE.lock().unwrap() = Some(async_dispatcher.get_handle());
         ASYNC_DISPATCHER_LOCAL_HANDLE.with(|cell| {
@@ -82,7 +84,7 @@ impl AsyncManager {
         }
     }
 
-    fn step() {
+    pub fn step() {
         // process futures
         ASYNC_DISPATCHER
             .with_inner_mut(|async_dispatcher| {
@@ -92,12 +94,51 @@ impl AsyncManager {
     }
 
     #[allow(dead_code)]
-    pub fn spawn<F>(future: F) -> JoinHandle<F::Output>
+    pub async fn sleep(duration: Duration) {
+        let _ = async_std::future::timeout(duration, async_std::future::pending::<()>()).await;
+    }
+
+    /// Block thread until future is resolved.
+    ///
+    /// This will continue to call the same executor so cef_step() will still be called!
+    #[allow(dead_code)]
+    pub fn block_on_local<F>(f: F)
+    where
+        F: Future<Output = ()> + 'static,
+    {
+        use futures::prelude::*;
+
+        let shared = f.shared();
+
+        {
+            let shared = shared.clone();
+            Self::spawn_local_on_main_thread(async move {
+                shared.await;
+            });
+        }
+
+        loop {
+            match shared.peek() {
+                Some(_) => {
+                    return;
+                }
+
+                None => {
+                    Self::step();
+                }
+            }
+
+            // don't burn anything
+            std::thread::sleep(Duration::from_millis(32));
+        }
+    }
+
+    pub fn spawn<F>(f: F) -> JoinHandle<F::Output>
     where
         F: Future + Send + 'static,
         F::Output: Send + 'static,
     {
-        TOKIO_RUNTIME.with_inner(|rt| rt.spawn(future)).unwrap()
+        TOKIO_RUNTIME.with_inner(|rt| rt.spawn(f)).unwrap()
     }
 
     #[allow(dead_code)]
@@ -128,7 +169,7 @@ impl AsyncManager {
     }
 
     #[allow(dead_code)]
-    pub fn defer_on_main_thread<F>(f: F)
+    pub fn spawn_local_on_main_thread<F>(f: F)
     where
         F: Future<Output = ()> + 'static,
     {

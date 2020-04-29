@@ -7,7 +7,9 @@ mod logger;
 mod plugin_updater;
 
 use crate::{async_manager::AsyncManager, plugin_updater::update_plugins};
-use classicube_sys::IGameComponent;
+use classicube_sys::{
+    Chat_Add, Chat_AddOf, IGameComponent, MsgType_MSG_TYPE_CLIENTSTATUS_2, OwnedString,
+};
 use log::debug;
 use std::{cell::RefCell, os::raw::c_int, ptr};
 
@@ -86,8 +88,6 @@ pub static mut Plugin_Component: IGameComponent = IGameComponent {
 };
 
 pub fn print<S: Into<String>>(s: S) {
-    use classicube_sys::{Chat_Add, OwnedString};
-
     let s = s.into();
     debug!("{}", s);
 
@@ -95,6 +95,17 @@ pub fn print<S: Into<String>>(s: S) {
 
     unsafe {
         Chat_Add(owned_string.as_cc_string());
+    }
+}
+
+pub fn status<S: Into<String>>(s: S) {
+    let s = s.into();
+    debug!("{}", s);
+
+    let owned_string = OwnedString::new(s);
+
+    unsafe {
+        Chat_AddOf(owned_string.as_cc_string(), MsgType_MSG_TYPE_CLIENTSTATUS_2);
     }
 }
 
