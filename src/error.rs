@@ -8,5 +8,6 @@ error_chain! {
         Io(::std::io::Error);
         Reqwest(reqwest::Error);
         Tokio(tokio::task::JoinError);
+        Nul(::std::ffi::NulError);
     }
 }

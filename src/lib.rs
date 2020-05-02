@@ -105,7 +105,10 @@ pub fn status<S: Into<String>>(s: S) {
     let owned_string = OwnedString::new(s);
 
     unsafe {
-        Chat_AddOf(owned_string.as_cc_string(), MsgType_MSG_TYPE_CLIENTSTATUS_2);
+        Chat_AddOf(
+            owned_string.as_cc_string(),
+            MsgType_MSG_TYPE_CLIENTSTATUS_2 as _,
+        );
     }
 }
 

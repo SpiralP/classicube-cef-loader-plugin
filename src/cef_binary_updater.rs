@@ -35,12 +35,19 @@ macro_rules! cef_arch {
     };
 }
 
+#[cfg(all(target_os = "linux", target_pointer_width = "64"))]
+macro_rules! cef_arch {
+    () => {
+        "linux64"
+    };
+}
+
 pub const CEF_VERSION: &str = concat!(cef_version!(), "_", cef_arch!(), "_minimal");
 
-pub const CEF_BINARY_PATH: &str = r"cef\cef_binary";
-pub const CEF_BINARY_PATH_NEW: &str = r"cef\cef_binary-new";
-pub const CEF_BINARY_VERSION_PATH: &str = r"cef\cef_binary.txt";
-pub const CEF_BINARY_VERSION_PATH_NEW: &str = r"cef\cef_binary.txt-new";
+pub const CEF_BINARY_PATH: &str = "cef/cef_binary";
+pub const CEF_BINARY_PATH_NEW: &str = "cef/cef_binary-new";
+pub const CEF_BINARY_VERSION_PATH: &str = "cef/cef_binary.txt";
+pub const CEF_BINARY_VERSION_PATH_NEW: &str = "cef/cef_binary.txt-new";
 
 fn get_current_version() -> Option<String> {
     fs::File::open(CEF_BINARY_VERSION_PATH)
@@ -221,7 +228,7 @@ async fn download(version: &str) -> Result<()> {
 
             if let Some(Component::Normal(first_part)) = trimmed_path_components.next() {
                 if let Some(ext) = trimmed_path.extension() {
-                    if (first_part == "Release" && (ext == "dll" || ext == "bin"))
+                    if (first_part == "Release" && (ext == "dll" || ext == "bin" || ext == "so"))
                         || (first_part == "Resources" && (ext == "pak" || ext == "dat"))
                     {
                         let even_more_trimmed: PathBuf = trimmed_path_components.collect();
