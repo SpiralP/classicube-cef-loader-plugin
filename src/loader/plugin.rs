@@ -62,11 +62,17 @@ pub fn try_init() -> Result<*mut IGameComponent> {
 
     #[cfg(target_os = "linux")]
     {
+        use std::os::unix::fs::PermissionsExt;
+
         // copy cef-linux-x86_64 to cef
-        fs::copy(
-            CEF_EXE_PATH,
-            Path::new(CEF_EXE_PATH).parent().unwrap().join("cef"),
-        )?;
+        let new_exe_path = Path::new(CEF_EXE_PATH).parent().unwrap().join("cef");
+        fs::copy(CEF_EXE_PATH, &new_exe_path)?;
+
+        // make it executable
+        let mut perms = fs::metadata(&new_exe_path)?.permissions();
+        perms.set_mode(755);
+
+        fs::set_permissions(new_exe_path, perms)?;
 
         // add cef/cef_binary to LD_LIBRARY_PATH so that libcef.so is found
         if let Ok(ld_library_path) = env::var("LD_LIBRARY_PATH") {
@@ -77,8 +83,6 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         } else {
             env::set_var("LD_LIBRARY_PATH", format!("{}/", CEF_BINARY_PATH));
         }
-
-        log::warn!("{:#?}", env::var("LD_LIBRARY_PATH"));
 
         // add ./cef/ to path so that we can run "cef"
         let path = env::var("PATH").unwrap();
