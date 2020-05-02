@@ -1,7 +1,7 @@
 use crate::{
     cef_binary_updater::CEF_BINARY_PATH,
     error::*,
-    plugin_updater::{CEF_PLUGIN_PATH, CEF_SIMPLE_PATH},
+    plugin_updater::{CEF_EXE_PATH, CEF_PLUGIN_PATH},
     print,
 };
 use classicube_sys::IGameComponent;
@@ -29,17 +29,14 @@ fn ptr_result<T>(ptr: *mut T) -> Result<*mut T> {
 }
 
 fn try_init() -> Result<()> {
-    // copy cefsimple-arch.exe to cefsimple.exe
+    // copy cef-arch.exe to cef.exe
     fs::copy(
-        CEF_SIMPLE_PATH,
-        Path::new(CEF_SIMPLE_PATH)
-            .parent()
-            .unwrap()
-            .join("cefsimple.exe"),
+        CEF_EXE_PATH,
+        Path::new(CEF_EXE_PATH).parent().unwrap().join("cef.exe"),
     )?;
 
     // add cef/cef_binary and cef/ to PATH so that cef.dll is found,
-    // and cefsimple.exe can run
+    // and cef.exe can run
     let path = env::var("PATH").unwrap();
     env::set_var("PATH", format!("{};{};{}", path, CEF_BINARY_PATH, "cef"));
 
