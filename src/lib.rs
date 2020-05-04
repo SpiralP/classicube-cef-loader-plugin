@@ -41,7 +41,33 @@ extern "C" fn init() {
     loader::init();
 }
 
+extern "C" fn free() {
+    debug!("Free");
+
+    loader::free();
+
+    ASYNC_MANAGER.with(|cell| {
+        if let Some(mut async_manager) = cell.borrow_mut().take() {
+            async_manager.shutdown();
+        }
+    });
+}
+
+extern "C" fn reset() {
+    debug!("Reset");
+
+    loader::reset();
+}
+
+extern "C" fn on_new_map() {
+    debug!("OnNewMap");
+
+    loader::on_new_map();
+}
+
 extern "C" fn on_new_map_loaded() {
+    debug!("OnNewMapLoaded");
+
     loader::on_new_map_loaded();
 
     // TODO fix this!!
@@ -56,18 +82,6 @@ extern "C" fn on_new_map_loaded() {
     // }
 }
 
-extern "C" fn free() {
-    debug!("Free");
-
-    loader::free();
-
-    ASYNC_MANAGER.with(|cell| {
-        if let Some(mut async_manager) = cell.borrow_mut().take() {
-            async_manager.shutdown();
-        }
-    });
-}
-
 #[no_mangle]
 pub static Plugin_ApiVersion: c_int = 1;
 
@@ -78,9 +92,9 @@ pub static mut Plugin_Component: IGameComponent = IGameComponent {
     // Called when the component is being freed. (e.g. due to game being closed)
     Free: Some(free),
     // Called to reset the component's state. (e.g. reconnecting to server)
-    Reset: None,
+    Reset: Some(reset),
     // Called to update the component's state when the user begins loading a new map.
-    OnNewMap: None,
+    OnNewMap: Some(on_new_map),
     // Called to update the component's state when the user has finished loading a new map.
     OnNewMapLoaded: Some(on_new_map_loaded),
     // Next component in linked list of components.
