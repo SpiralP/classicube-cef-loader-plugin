@@ -4,7 +4,7 @@ use crate::{
     plugin_updater::{CEF_EXE_PATH, CEF_PLUGIN_PATH},
 };
 use classicube_sys::{DynamicLib_Get, DynamicLib_Load, IGameComponent, OwnedString};
-use std::{cell::Cell, ffi::CString, fs, os::raw::c_void, ptr};
+use std::{cell::Cell, ffi::CString, fs, os::raw::c_void, path::Path, ptr};
 
 thread_local!(
     static LIBRARY: Cell<Option<*mut c_void>> = Cell::new(None);
@@ -48,7 +48,7 @@ fn dll_get(library: *mut c_void, symbol_name: &str) -> Result<*mut c_void> {
 pub fn try_init() -> Result<*mut IGameComponent> {
     #[cfg(target_os = "windows")]
     {
-        use std::{env, path::Path};
+        use std::env;
 
         // copy cef-windows-x86_64.exe to cef.exe
         fs::copy(
@@ -64,11 +64,11 @@ pub fn try_init() -> Result<*mut IGameComponent> {
 
     #[cfg(target_os = "linux")]
     {
-        use std::{env, os::unix::fs::PermissionsExt, path::Path};
+        use std::{env, os::unix::fs::PermissionsExt};
 
         // make it executable
         let mut perms = fs::metadata(CEF_EXE_PATH)?.permissions();
-        perms.set_mode(755);
+        perms.set_mode(0o755);
         fs::set_permissions(CEF_EXE_PATH, perms)?;
 
         // copy cef-linux-x86_64 to cef
@@ -96,16 +96,14 @@ pub fn try_init() -> Result<*mut IGameComponent> {
 
         // make it executable
         let mut perms = fs::metadata(CEF_EXE_PATH)?.permissions();
-        perms.set_mode(755);
+        perms.set_mode(0o755);
         fs::set_permissions(CEF_EXE_PATH, perms)?;
 
         // trying to link with dlopen will just hang the window
-        if !fs::metadata(format!(
-            "./cef/{}/Chromium Embedded Framework",
-            CEF_BINARY_PATH
-        ))
-        .map(|m| m.is_file())
-        .unwrap_or(false)
+        let dll_path = Path::new(CEF_BINARY_PATH).join("Chromium Embedded Framework");
+        if !fs::metadata(&dll_path)
+            .map(|m| m.is_file())
+            .unwrap_or(false)
         {
             return Err("cef-binary missing".into());
         }
