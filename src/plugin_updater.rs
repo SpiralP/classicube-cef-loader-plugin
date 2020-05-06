@@ -37,6 +37,17 @@ pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_linux_x86_64.so";
 #[cfg(all(target_os = "linux", target_pointer_width = "64"))]
 pub const CEF_EXE_PATH: &str = "cef/cef-linux-x86_64";
 
+// macos 64 bit
+
+#[cfg(all(target_os = "macos", target_pointer_width = "64"))]
+pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_macos_x86_64.dylib";
+
+#[cfg(all(target_os = "macos", target_pointer_width = "64"))]
+pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_macos_x86_64.dylib";
+
+#[cfg(all(target_os = "macos", target_pointer_width = "64"))]
+pub const CEF_EXE_PATH: &str = "cef/cef-macos-x86_64";
+
 pub fn update_plugins() {
     fs::create_dir_all("cef").unwrap();
 

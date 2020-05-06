@@ -42,10 +42,27 @@ macro_rules! cef_arch {
     };
 }
 
+#[cfg(all(target_os = "macos", target_pointer_width = "64"))]
+macro_rules! cef_arch {
+    () => {
+        "macosx64"
+    };
+}
+
 pub const CEF_VERSION: &str = concat!(cef_version!(), "_", cef_arch!(), "_minimal");
 
+#[cfg(not(target_os = "macos"))]
 pub const CEF_BINARY_PATH: &str = "cef/cef_binary";
+
+#[cfg(target_os = "macos")]
+pub const CEF_BINARY_PATH: &str = "cef/Chromium Embedded Framework.framework";
+
+#[cfg(not(target_os = "macos"))]
 pub const CEF_BINARY_PATH_NEW: &str = "cef/cef_binary-new";
+
+#[cfg(target_os = "macos")]
+pub const CEF_BINARY_PATH_NEW: &str = "cef/Chromium Embedded Framework.framework-new";
+
 pub const CEF_BINARY_VERSION_PATH: &str = "cef/cef_binary.txt";
 pub const CEF_BINARY_VERSION_PATH_NEW: &str = "cef/cef_binary.txt-new";
 
@@ -227,18 +244,42 @@ async fn download(version: &str) -> Result<()> {
             let mut trimmed_path_components = trimmed_path.components();
 
             if let Some(Component::Normal(first_part)) = trimmed_path_components.next() {
-                if let Some(ext) = trimmed_path.extension() {
-                    if (first_part == "Release" && (ext == "dll" || ext == "bin" || ext == "so"))
-                        || (first_part == "Resources" && (ext == "pak" || ext == "dat"))
-                    {
-                        let even_more_trimmed: PathBuf = trimmed_path_components.collect();
-                        // icu .dat and .bin files must be next to cef.dll
-                        let out_path = Path::new(CEF_BINARY_PATH_NEW).join(&even_more_trimmed);
-                        debug!("{:?} {:?}", path, out_path);
+                #[cfg(not(target_os = "macos"))]
+                {
+                    if let Some(ext) = trimmed_path.extension() {
+                        if (first_part == "Release"
+                            && (ext == "dll" || ext == "bin" || ext == "so"))
+                            || (first_part == "Resources" && (ext == "pak" || ext == "dat"))
+                        {
+                            let even_more_trimmed: PathBuf = trimmed_path_components.collect();
+                            // icu .dat and .bin files must be next to cef.dll
+                            let out_path = Path::new(CEF_BINARY_PATH_NEW).join(&even_more_trimmed);
+                            debug!("{:?} {:?}", path, out_path);
 
-                        let parent = out_path.parent().unwrap();
-                        fs::create_dir_all(&parent)?;
-                        file.unpack(&out_path)?;
+                            let parent = out_path.parent().unwrap();
+                            fs::create_dir_all(&parent)?;
+                            file.unpack(&out_path)?;
+                        }
+                    }
+                }
+
+                // mac needs to extract Chromium Embedded Framework.framework to cef/
+                #[cfg(target_os = "macos")]
+                {
+                    if first_part == "Release" {
+                        if let Some(Component::Normal(second_part)) = trimmed_path_components.next()
+                        {
+                            if second_part == "Chromium Embedded Framework.framework" {
+                                let even_more_trimmed: PathBuf = trimmed_path_components.collect();
+                                let out_path =
+                                    Path::new(CEF_BINARY_PATH_NEW).join(&even_more_trimmed);
+                                debug!("{:?} {:?}", path, out_path);
+
+                                let parent = out_path.parent().unwrap();
+                                fs::create_dir_all(&parent)?;
+                                file.unpack(&out_path)?;
+                            }
+                        }
                     }
                 }
             }

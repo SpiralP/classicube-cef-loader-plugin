@@ -89,6 +89,44 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         env::set_var("PATH", format!("{}:{}", path, "cef"));
     }
 
+    #[cfg(target_os = "macos")]
+    {
+        use std::io::Write;
+
+        // trying to link with dlopen will just hang the window
+        if !fs::metadata("./cef/Chromium Embedded Framework.framework/Chromium Embedded Framework")
+            .map(|m| m.is_file())
+            .unwrap_or(false)
+        {
+            return Err("cef-binary missing".into());
+        }
+
+        // cef, cef (GPU), cef (Plugin), cef (Renderer)
+        // net.classicube.game.cef, .cef.gpu, etc
+
+        for (app_name, app_identifier) in &[
+            ("cef", "com.classicube.game.cef"),
+            ("cef (GPU)", "com.classicube.game.cef.gpu"),
+            ("cef (Plugin)", "com.classicube.game.cef.plugin"),
+            ("cef (Renderer)", "com.classicube.game.cef.renderer"),
+        ] {
+            fs::create_dir_all(format!("./cef/{}.app/Contents/MacOS", app_name))?;
+            fs::copy(
+                CEF_EXE_PATH,
+                format!("./cef/{}.app/Contents/MacOS/{}", app_name, app_name),
+            )?;
+
+            let mut f = fs::File::create(format!("./cef/{}.app/Contents/Info.plist", app_name))?;
+            write!(
+                f,
+                "{}",
+                MAC_INFO_TEMPLATE
+                    .replace("APP_NAME", app_name)
+                    .replace("APP_IDENTIFIER", app_identifier)
+            )?;
+        }
+    }
+
     let library = dll_load(CEF_PLUGIN_PATH)?;
     LIBRARY.with(|cell| cell.set(Some(library)));
 
@@ -105,3 +143,40 @@ pub fn free() {
         }
     });
 }
+
+#[cfg(target_os = "macos")]
+const MAC_INFO_TEMPLATE: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>APP_NAME</string>
+	<key>CFBundleExecutable</key>
+	<string>APP_NAME</string>
+	<key>CFBundleIdentifier</key>
+	<string>APP_IDENTIFIER</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>APP_NAME</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>LSEnvironment</key>
+	<dict>
+		<key>MallocNanoZone</key>
+		<string>0</string>
+	</dict>
+	<key>LSFileQuarantineEnabled</key>
+	<true/>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.9.0</string>
+	<key>LSUIElement</key>
+	<string>1</string>
+	<key>NSSupportsAutomaticGraphicsSwitching</key>
+	<true/>
+</dict>
+</plist>"#;
