@@ -125,3 +125,62 @@ jobs:
           files: classicube_cef_loader_linux_${{ matrix.config.arch }}.so
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  mac:
+    name: Build MacOS ${{ matrix.config.arch }}
+    runs-on: macOS-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { arch: x86_64, bits: 64 }
+          # cef-binary doesn't have 32 bit download
+          # - { arch: i686, bits: 32 }
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install deps
+        run: |
+          brew install cmake \
+
+      - name: Install nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          target: ${{ matrix.config.arch }}-apple-darwin
+          toolchain: nightly-${{ matrix.config.arch }}-apple-darwin
+          override: true
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        if: startsWith(github.ref, 'refs/tags/') != true
+        with:
+          target: ${{ matrix.config.arch }}-apple-darwin
+          command: build
+
+      - name: Test
+        uses: actions-rs/cargo@v1
+        if: startsWith(github.ref, 'refs/tags/') != true
+        with:
+          target: ${{ matrix.config.arch }}-apple-darwin
+          command: test
+          args: -- --nocapture
+
+      - name: Build Release
+        uses: actions-rs/cargo@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          target: ${{ matrix.config.arch }}-apple-darwin
+          command: build
+          args: --release
+
+      - run: mv target/release/libclassicube_cef_loader_plugin.dylib "classicube_cef_loader_macos_${{ matrix.config.arch }}.dylib"
+        if: startsWith(github.ref, 'refs/tags/')
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: classicube_cef_loader_macos_${{ matrix.config.arch }}.dylib
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
