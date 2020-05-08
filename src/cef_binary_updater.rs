@@ -1,4 +1,4 @@
-use crate::{async_manager::AsyncManager, error::*, print_async, status};
+use crate::{async_manager, error::*, print_async, status};
 use classicube_helpers::color;
 use futures::stream::{StreamExt, TryStreamExt};
 use log::debug;
@@ -154,7 +154,7 @@ async fn download(version: &str) -> Result<()> {
         let running = running.clone();
         let downloaded = downloaded.clone();
 
-        AsyncManager::spawn_on_main_thread(async move {
+        async_manager::spawn_on_main_thread(async move {
             while running.load(Ordering::SeqCst) {
                 let downloaded = downloaded.load(Ordering::SeqCst);
 
@@ -175,7 +175,7 @@ async fn download(version: &str) -> Result<()> {
                     color::PINK,
                 ));
 
-                AsyncManager::sleep(Duration::from_secs(1)).await;
+                async_manager::sleep(Duration::from_secs(1)).await;
             }
         });
     }
@@ -291,7 +291,7 @@ async fn download(version: &str) -> Result<()> {
 
     running.store(false, Ordering::SeqCst);
 
-    AsyncManager::run_on_main_thread(async {
+    async_manager::run_on_main_thread(async {
         status("");
     })
     .await;

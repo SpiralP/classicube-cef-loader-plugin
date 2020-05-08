@@ -6,37 +6,51 @@ mod loader;
 mod logger;
 mod plugin_updater;
 
-use crate::{async_manager::AsyncManager, plugin_updater::update_plugins};
+use crate::plugin_updater::update_plugins;
 use classicube_sys::{
     Chat_Add, Chat_AddOf, IGameComponent, MsgType_MSG_TYPE_CLIENTSTATUS_2, OwnedString,
 };
 use log::{debug, info};
-use std::{cell::RefCell, os::raw::c_int, ptr};
-
-thread_local!(
-    static ASYNC_MANAGER: RefCell<Option<AsyncManager>> = RefCell::new(None);
-);
+use std::{os::raw::c_int, ptr};
 
 extern "C" fn init() {
+    color_backtrace::install_with_settings(
+        color_backtrace::Settings::new().verbosity(color_backtrace::Verbosity::Full),
+    );
+
     logger::initialize(true, false);
 
     debug!("Init");
 
-    ASYNC_MANAGER.with(|cell| {
-        let option = &mut *cell.borrow_mut();
-        let mut async_manager = AsyncManager::new();
-        async_manager.initialize();
-        *option = Some(async_manager);
+    async_manager::initialize();
+
+    async_manager::spawn(async move {
+        #[cfg(not(debug_assertions))]
+        let result = update_plugins().await;
+
+        // never update if debug build
+        #[cfg(debug_assertions)]
+        let result = if false {
+            update_plugins().await
+        } else {
+            Ok(())
+        };
+
+        if let Err(e) = result {
+            print_async(format!(
+                "{}Failed to update: {}{}",
+                classicube_helpers::color::RED,
+                classicube_helpers::color::WHITE,
+                e
+            ))
+            .await;
+        }
+
+        async_manager::spawn_on_main_thread(async {
+            debug!("async_manager marked for shutdown");
+            async_manager::mark_for_shutdown();
+        });
     });
-
-    // never update if debug build
-    #[cfg(not(debug_assertions))]
-    update_plugins();
-
-    #[cfg(debug_assertions)]
-    if false {
-        update_plugins();
-    }
 
     loader::init();
 }
@@ -46,23 +60,23 @@ extern "C" fn free() {
 
     loader::free();
 
-    ASYNC_MANAGER.with(|cell| {
-        if let Some(mut async_manager) = cell.borrow_mut().take() {
-            async_manager.shutdown();
-        }
-    });
+    async_manager::shutdown();
 }
 
 extern "C" fn reset() {
     debug!("Reset");
 
     loader::reset();
+
+    async_manager::check_should_shutdown();
 }
 
 extern "C" fn on_new_map() {
     debug!("OnNewMap");
 
     loader::on_new_map();
+
+    async_manager::check_should_shutdown();
 }
 
 extern "C" fn on_new_map_loaded() {
@@ -70,16 +84,7 @@ extern "C" fn on_new_map_loaded() {
 
     loader::on_new_map_loaded();
 
-    // TODO fix this!!
-    // I want to unload this plugin's async runtimes once we're done with updating
-    // if SHOULD_SHUTDOWN.with(|cell| cell.get()) {
-    //     SHOULD_SHUTDOWN.with(|cell| cell.set(false));
-    //     ASYNC_MANAGER.with(|cell| {
-    //         if let Some(mut async_manager) = cell.borrow_mut().take() {
-    //             async_manager.shutdown();
-    //         }
-    //     });
-    // }
+    async_manager::check_should_shutdown();
 }
 
 #[no_mangle]
@@ -135,7 +140,7 @@ pub fn status<S: Into<String>>(s: S) {
 }
 
 pub async fn print_async<S: Into<String> + Send + 'static>(s: S) {
-    AsyncManager::run_on_main_thread(async move {
+    async_manager::run_on_main_thread(async move {
         print(s);
     })
     .await;

@@ -1,5 +1,5 @@
 use crate::{
-    cef_binary_updater, github_release_checker::GitHubReleaseChecker, print_async, AsyncManager,
+    cef_binary_updater, error::*, github_release_checker::GitHubReleaseChecker, print_async,
 };
 use classicube_helpers::color;
 use std::fs;
@@ -48,93 +48,47 @@ pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_macos_x86_64.dylib";
 #[cfg(all(target_os = "macos", target_pointer_width = "64"))]
 pub const CEF_EXE_PATH: &str = "cef/cef-macos-x86_64";
 
-pub fn update_plugins() {
+pub async fn update_plugins() -> Result<()> {
     fs::create_dir_all("cef").unwrap();
 
     cef_binary_updater::prepare();
 
-    AsyncManager::spawn(async move {
-        let mut had_updates = false;
+    let mut had_updates = false;
 
-        let loader_plugin = GitHubReleaseChecker::new(
-            "Cef Loader".to_string(),
-            "SpiralP".to_string(),
-            "rust-classicube-cef-loader-plugin".to_string(),
-            vec![CEF_PLUGIN_LOADER_PATH.into()],
-        );
+    let loader_plugin = GitHubReleaseChecker::new(
+        "Cef Loader".to_string(),
+        "SpiralP".to_string(),
+        "rust-classicube-cef-loader-plugin".to_string(),
+        vec![CEF_PLUGIN_LOADER_PATH.into()],
+    );
+    let updated = loader_plugin.check().await?;
+    if updated {
+        had_updates = true;
+    }
 
-        match loader_plugin.check().await {
-            Ok(updated) => {
-                if updated {
-                    had_updates = true;
-                }
-            }
+    let cef_plugin = GitHubReleaseChecker::new(
+        "Cef".to_string(),
+        "SpiralP".to_string(),
+        "rust-classicube-cef-plugin".to_string(),
+        vec![CEF_PLUGIN_PATH.into(), CEF_EXE_PATH.into()],
+    );
+    let updated = cef_plugin.check().await?;
+    if updated {
+        had_updates = true;
+    }
 
-            Err(e) => {
-                print_async(format!(
-                    "{}Failed to update: {}{}",
-                    classicube_helpers::color::RED,
-                    classicube_helpers::color::WHITE,
-                    e
-                ))
-                .await;
-            }
-        }
+    let updated = cef_binary_updater::check().await?;
+    if updated {
+        had_updates = true;
+    }
 
-        let cef_plugin = GitHubReleaseChecker::new(
-            "Cef".to_string(),
-            "SpiralP".to_string(),
-            "rust-classicube-cef-plugin".to_string(),
-            vec![CEF_PLUGIN_PATH.into(), CEF_EXE_PATH.into()],
-        );
+    if had_updates {
+        print_async(format!(
+            "{}Everything done, restart your game to finish the update!",
+            color::YELLOW
+        ))
+        .await;
+    }
 
-        match cef_plugin.check().await {
-            Ok(updated) => {
-                if updated {
-                    had_updates = true;
-                }
-            }
-
-            Err(e) => {
-                print_async(format!(
-                    "{}Failed to update: {}{}",
-                    classicube_helpers::color::RED,
-                    classicube_helpers::color::WHITE,
-                    e
-                ))
-                .await;
-            }
-        }
-
-        match cef_binary_updater::check().await {
-            Ok(updated) => {
-                if updated {
-                    had_updates = true;
-                }
-            }
-
-            Err(e) => {
-                print_async(format!(
-                    "{}Failed to update: {}{}",
-                    classicube_helpers::color::RED,
-                    classicube_helpers::color::WHITE,
-                    e
-                ))
-                .await;
-            }
-        }
-
-        if had_updates {
-            print_async(format!(
-                "{}Everything done, restart your game to finish the update!",
-                color::YELLOW
-            ))
-            .await;
-        }
-
-        // AsyncManager::spawn_on_main_thread(async {
-        //     debug!("marked for shutdown");
-        //     AsyncManager::mark_for_shutdown();
-        // });
-    });
+    Ok(())
 }
