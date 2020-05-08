@@ -10,7 +10,7 @@ use crate::{async_manager::AsyncManager, plugin_updater::update_plugins};
 use classicube_sys::{
     Chat_Add, Chat_AddOf, IGameComponent, MsgType_MSG_TYPE_CLIENTSTATUS_2, OwnedString,
 };
-use log::debug;
+use log::{debug, info};
 use std::{cell::RefCell, os::raw::c_int, ptr};
 
 thread_local!(
@@ -102,8 +102,12 @@ pub static mut Plugin_Component: IGameComponent = IGameComponent {
 };
 
 pub fn print<S: Into<String>>(s: S) {
-    let s = s.into();
-    debug!("{}", s);
+    let mut s = s.into();
+    info!("{}", s);
+
+    if s.len() > 255 {
+        s.truncate(255);
+    }
 
     let owned_string = OwnedString::new(s);
 
