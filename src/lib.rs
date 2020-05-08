@@ -117,8 +117,12 @@ pub fn print<S: Into<String>>(s: S) {
 }
 
 pub fn status<S: Into<String>>(s: S) {
-    let s = s.into();
-    debug!("{}", s);
+    let mut s = s.into();
+    info!("{}", s);
+
+    if s.len() > 255 {
+        s.truncate(255);
+    }
 
     let owned_string = OwnedString::new(s);
 
