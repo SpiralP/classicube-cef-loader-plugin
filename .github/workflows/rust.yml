@@ -2,7 +2,7 @@ name: Rust
 on: [push]
 
 jobs:
-  buildForSomePlatforms:
+  windows:
     name: Build Windows ${{ matrix.config.arch }}
     runs-on: windows-latest
     strategy:
@@ -84,8 +84,9 @@ jobs:
       - name: Install 64 bit deps
         if: matrix.config.bits == 64
         run: |
-          sudo apt-get -y update \
-            && sudo apt-get -y install clang llvm
+          sudo apt-get update \
+          && sudo apt-get install -y git curl gcc g++ build-essential libssl-dev pkg-config libglib2.0-dev libpango1.0-dev \
+            libatk1.0-dev libgdk-pixbuf2.0-dev libgtk-3-dev cmake clang libnss3 libasound2 libxss1 libnspr4 \
 
       - name: Install nightly
         uses: actions-rs/toolchain@v1
