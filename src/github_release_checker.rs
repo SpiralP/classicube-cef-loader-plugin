@@ -71,6 +71,18 @@ impl GitHubReleaseChecker {
     }
 
     pub async fn check(&self) -> Result<bool> {
+        // delete "-old" files
+
+        for asset_path in &self.asset_paths {
+            let asset_name = asset_path.file_name().unwrap().to_str().unwrap();
+
+            let parent = asset_path.parent().unwrap();
+            let old_path = Path::new(&parent).join(format!("{}-old", &asset_name));
+
+            // ignore error
+            drop(fs::remove_file(&old_path));
+        }
+
         let current_version = self.get_current_version().unwrap_or_default();
 
         let release = self.get_latest_release().await?;
