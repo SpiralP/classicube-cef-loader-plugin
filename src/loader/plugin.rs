@@ -92,6 +92,10 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         // add ./cef/ to path so that we can run "cef"
         let path = env::var("PATH").unwrap();
         env::set_var("PATH", format!("{}:{}", path, "cef"));
+
+        // fix linux keyboard language layout mapping
+        // on finnish keyboard: US [ is typed as ¥, but is suppose to be å
+        env::set_var("LC_CTYPE", "C");
     }
 
     #[cfg(target_os = "macos")]
