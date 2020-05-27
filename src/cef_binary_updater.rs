@@ -49,43 +49,32 @@ macro_rules! cef_arch {
     };
 }
 
-pub const CEF_VERSION: &str = concat!(cef_version!(), "_", cef_arch!(), "_minimal");
+const CEF_VERSION: &str = concat!(cef_version!(), "_", cef_arch!(), "_minimal");
 
 #[cfg(not(target_os = "macos"))]
-pub const CEF_BINARY_PATH: &str = "cef/cef_binary";
+const CEF_BINARY_DIR_NAME: &str = "cef_binary";
 
 #[cfg(target_os = "macos")]
-pub const CEF_BINARY_PATH: &str = "cef/Chromium Embedded Framework.framework";
+const CEF_BINARY_DIR_NAME: &str = "Chromium Embedded Framework.framework";
 
-#[cfg(not(target_os = "macos"))]
-pub const CEF_BINARY_PATH_NEW: &str = "cef/cef_binary-new";
+const CEF_BINARY_VERSION_FILE_NAME: &str = "cef_binary.txt";
 
-#[cfg(target_os = "macos")]
-pub const CEF_BINARY_PATH_NEW: &str = "cef/Chromium Embedded Framework.framework-new";
+pub fn cef_binary_path() -> PathBuf {
+    Path::new("cef").join(CEF_BINARY_DIR_NAME)
+}
 
-pub const CEF_BINARY_VERSION_PATH: &str = "cef/cef_binary.txt";
-pub const CEF_BINARY_VERSION_PATH_NEW: &str = "cef/cef_binary.txt-new";
+fn version_path() -> PathBuf {
+    Path::new("cef").join(CEF_BINARY_VERSION_FILE_NAME)
+}
 
 fn get_current_version() -> Option<String> {
-    fs::File::open(CEF_BINARY_VERSION_PATH)
+    fs::File::open(version_path())
         .map(|mut f| {
             let mut s = String::new();
             f.read_to_string(&mut s).unwrap();
             s
         })
         .ok()
-}
-
-pub fn prepare() {
-    // cef's .bin files are locked hard so we can't do the flip/flop
-    if Path::new(CEF_BINARY_VERSION_PATH_NEW).is_file() && Path::new(CEF_BINARY_PATH_NEW).is_dir() {
-        if Path::new(CEF_BINARY_PATH).is_dir() {
-            fs::remove_dir_all(CEF_BINARY_PATH).unwrap();
-        }
-        // mark as fully updated
-        fs::rename(CEF_BINARY_PATH_NEW, CEF_BINARY_PATH).unwrap();
-        fs::rename(CEF_BINARY_VERSION_PATH_NEW, CEF_BINARY_VERSION_PATH).unwrap();
-    }
 }
 
 pub async fn check() -> Result<bool> {
@@ -102,16 +91,28 @@ pub async fn check() -> Result<bool> {
         ))
         .await;
 
-        fs::create_dir_all(CEF_BINARY_PATH_NEW).unwrap();
-        download(CEF_VERSION).await?;
+        let parent = Path::new("cef");
+        let wanted_path = Path::new(&parent).join(CEF_BINARY_DIR_NAME);
+        let new_path = Path::new(&parent).join(format!("{}-new", CEF_BINARY_DIR_NAME));
 
-        {
-            // mark as half-updated
-            let mut f = fs::File::create(CEF_BINARY_VERSION_PATH_NEW).unwrap();
-            write!(f, "{}", CEF_VERSION).unwrap();
+        fs::create_dir_all(&new_path)?;
+        download(CEF_VERSION, new_path.to_path_buf()).await?;
+
+        // remove old dir
+        if Path::new(&wanted_path).is_dir() {
+            fs::remove_dir_all(&wanted_path)?;
         }
 
-        print_async(format!("{}cef-binary finished downloading", color::LIME,)).await;
+        // rename downloaded to wanted_path, replaces if existed
+        fs::rename(&new_path, &wanted_path)?;
+
+        {
+            // mark that we updated
+            let mut f = fs::File::create(version_path())?;
+            write!(f, "{}", CEF_VERSION)?;
+        }
+
+        print_async(format!("{}cef-binary finished downloading", color::LIME)).await;
 
         Ok(true)
     } else {
@@ -135,7 +136,7 @@ where
     }
 }
 
-async fn download(version: &str) -> Result<()> {
+async fn download(version: &str, cef_binary_dir_path: PathBuf) -> Result<()> {
     use futures::compat::{Compat, Compat01As03};
     use tokio_util::compat::{FuturesAsyncReadCompatExt, Tokio02AsyncReadCompatExt};
 
@@ -253,7 +254,7 @@ async fn download(version: &str) -> Result<()> {
                         {
                             let even_more_trimmed: PathBuf = trimmed_path_components.collect();
                             // icu .dat and .bin files must be next to cef.dll
-                            let out_path = Path::new(CEF_BINARY_PATH_NEW).join(&even_more_trimmed);
+                            let out_path = Path::new(&cef_binary_dir_path).join(&even_more_trimmed);
                             debug!("{:?} {:?}", path, out_path);
 
                             let parent = out_path.parent().unwrap();
@@ -272,7 +273,7 @@ async fn download(version: &str) -> Result<()> {
                             if second_part == "Chromium Embedded Framework.framework" {
                                 let even_more_trimmed: PathBuf = trimmed_path_components.collect();
                                 let out_path =
-                                    Path::new(CEF_BINARY_PATH_NEW).join(&even_more_trimmed);
+                                    Path::new(&cef_binary_dir_path).join(&even_more_trimmed);
                                 debug!("{:?} {:?}", path, out_path);
 
                                 let parent = out_path.parent().unwrap();
