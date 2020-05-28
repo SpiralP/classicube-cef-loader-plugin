@@ -11,41 +11,7 @@ use classicube_sys::{
     Chat_Add, Chat_AddOf, IGameComponent, MsgType_MSG_TYPE_CLIENTSTATUS_2, OwnedString,
 };
 use log::{debug, info};
-use std::{cell::RefCell, os::raw::c_int, ptr};
-
-// queue callback kinds while we are still updating, then call them all after we init()
-thread_local!(
-    static CALLBACK_QUEUE: RefCell<Option<Vec<CallbackKind>>> = RefCell::new(Some(Vec::new()));
-);
-
-enum CallbackKind {
-    Free,
-    Reset,
-    OnNewMap,
-    OnNewMapLoaded,
-}
-
-fn queue_callback(kind: CallbackKind) {
-    CALLBACK_QUEUE.with(|cell| {
-        let maybe_queue = &mut *cell.borrow_mut();
-        if let Some(queue) = maybe_queue {
-            // not yet init'd, queue for right after we init
-            queue.push(kind);
-        } else {
-            // already init'd
-            run_callback(kind);
-        }
-    });
-}
-
-fn run_callback(kind: CallbackKind) {
-    match kind {
-        CallbackKind::Free => loader::free(),
-        CallbackKind::Reset => loader::reset(),
-        CallbackKind::OnNewMap => loader::on_new_map(),
-        CallbackKind::OnNewMapLoaded => loader::on_new_map_loaded(),
-    }
-}
+use std::{os::raw::c_int, ptr};
 
 extern "C" fn init() {
     color_backtrace::install_with_settings(
@@ -81,25 +47,18 @@ extern "C" fn init() {
         }
 
         async_manager::spawn_on_main_thread(async {
-            loader::init();
-
+            debug!("async_manager marked for shutdown");
             async_manager::mark_for_shutdown();
-
-            CALLBACK_QUEUE.with(|cell| {
-                let maybe_queue = &mut *cell.borrow_mut();
-
-                for kind in maybe_queue.take().unwrap().drain(..) {
-                    run_callback(kind);
-                }
-            });
         });
     });
+
+    loader::init();
 }
 
 extern "C" fn free() {
     debug!("Free");
 
-    queue_callback(CallbackKind::Free);
+    loader::free();
 
     async_manager::shutdown();
 }
@@ -107,7 +66,7 @@ extern "C" fn free() {
 extern "C" fn reset() {
     debug!("Reset");
 
-    queue_callback(CallbackKind::Reset);
+    loader::reset();
 
     async_manager::check_should_shutdown();
 }
@@ -115,7 +74,7 @@ extern "C" fn reset() {
 extern "C" fn on_new_map() {
     debug!("OnNewMap");
 
-    queue_callback(CallbackKind::OnNewMap);
+    loader::on_new_map();
 
     async_manager::check_should_shutdown();
 }
@@ -123,7 +82,7 @@ extern "C" fn on_new_map() {
 extern "C" fn on_new_map_loaded() {
     debug!("OnNewMapLoaded");
 
-    queue_callback(CallbackKind::OnNewMapLoaded);
+    loader::on_new_map_loaded();
 
     async_manager::check_should_shutdown();
 }

@@ -51,6 +51,8 @@ pub const CEF_EXE_PATH: &str = "cef/cef-macos-x86_64";
 pub async fn update_plugins() -> Result<()> {
     fs::create_dir_all("cef").unwrap();
 
+    cef_binary_updater::prepare();
+
     let mut had_updates = false;
 
     let loader_plugin = GitHubReleaseChecker::new(
@@ -81,7 +83,11 @@ pub async fn update_plugins() -> Result<()> {
     }
 
     if had_updates {
-        print_async(format!("{}Cef updated!", color::YELLOW)).await;
+        print_async(format!(
+            "{}Everything done, restart your game to finish the update!",
+            color::YELLOW
+        ))
+        .await;
     }
 
     Ok(())

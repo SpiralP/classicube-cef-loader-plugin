@@ -70,6 +70,18 @@ impl GitHubReleaseChecker {
     }
 
     pub async fn check(&self) -> Result<bool> {
+        // delete "-old" files
+
+        for asset_path in &self.asset_paths {
+            let asset_name = asset_path.file_name().unwrap().to_str().unwrap();
+
+            let parent = asset_path.parent().unwrap();
+            let old_path = Path::new(&parent).join(format!("{}-old", &asset_name));
+
+            // ignore error
+            drop(fs::remove_file(&old_path));
+        }
+
         let current_version = self.get_current_version().unwrap_or_default();
 
         let release = self.get_latest_release().await?;
@@ -131,6 +143,7 @@ impl GitHubReleaseChecker {
             let parent = asset_path.parent().unwrap();
             let wanted_path = Path::new(&parent).join(&asset_name);
             let new_path = Path::new(&parent).join(format!("{}-new", &asset_name));
+            let old_path = Path::new(&parent).join(format!("{}-old", &asset_name));
             {
                 let mut f = tokio::fs::File::create(&new_path).await?;
 
@@ -146,7 +159,14 @@ impl GitHubReleaseChecker {
                 tokio::io::copy(&mut stream, &mut f).await?;
             }
 
-            // rename downloaded to wanted_path, replaces if existed
+            if wanted_path.is_file() {
+                // we need to flip/flop files
+
+                // rename current loaded to -old
+                fs::rename(&wanted_path, &old_path)?;
+            }
+
+            // rename downloaded to wanted_path
             fs::rename(&new_path, &wanted_path)?;
 
             print_async(format!(
