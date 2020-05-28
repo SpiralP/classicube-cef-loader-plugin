@@ -1,5 +1,7 @@
 use async_dispatcher::{Dispatcher, DispatcherHandle, LocalDispatcherHandle};
 use classicube_helpers::{tick::TickEventHandler, CellGetSet, OptionWithInner};
+use futures::{future::Either, prelude::*};
+use futures_timer::Delay;
 use lazy_static::lazy_static;
 use log::debug;
 use std::{
@@ -8,7 +10,7 @@ use std::{
     sync::Mutex,
     time::Duration,
 };
-use tokio::task::JoinHandle;
+use tokio::task::{JoinError, JoinHandle};
 
 thread_local!(
     static ASYNC_DISPATCHER: RefCell<Option<Dispatcher>> = Default::default();
@@ -121,9 +123,21 @@ pub fn step() {
         .unwrap();
 }
 
-#[allow(dead_code)]
 pub async fn sleep(duration: Duration) {
-    let _ = async_std::future::timeout(duration, async_std::future::pending::<()>()).await;
+    let _ = Delay::new(duration).await;
+}
+
+#[allow(dead_code)]
+pub async fn timeout<T, F>(duration: Duration, f: F) -> Option<T>
+where
+    F: Future<Output = T> + Send,
+{
+    let delay = Delay::new(duration);
+
+    match future::select(delay, f.boxed()).await {
+        Either::Left((_, _f)) => None,
+        Either::Right((r, _delay)) => Some(r),
+    }
 }
 
 /// Block thread until future is resolved.
@@ -157,7 +171,7 @@ where
         }
 
         // don't burn anything
-        std::thread::sleep(Duration::from_millis(32));
+        std::thread::sleep(Duration::from_millis(16));
     }
 }
 
@@ -167,6 +181,15 @@ where
     F::Output: Send + 'static,
 {
     TOKIO_RUNTIME.with_inner(|rt| rt.spawn(f)).unwrap()
+}
+
+#[allow(dead_code)]
+pub fn spawn_blocking<F, R>(f: F) -> JoinHandle<Result<R, JoinError>>
+where
+    F: FnOnce() -> R + Send + 'static,
+    R: Send + 'static,
+{
+    spawn(async { tokio::task::spawn_blocking(f).await })
 }
 
 #[allow(dead_code)]
