@@ -1,5 +1,5 @@
 use crate::{
-    cef_binary_updater::CEF_BINARY_PATH,
+    cef_binary_updater::cef_binary_path,
     error::*,
     plugin_updater::{CEF_EXE_PATH, CEF_PLUGIN_PATH},
 };
@@ -61,7 +61,10 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         // add cef/cef_binary and cef/ to PATH so that cef.dll is found,
         // and cef.exe can run
         let path = env::var("PATH").unwrap();
-        env::set_var("PATH", format!("{};{};{}", path, CEF_BINARY_PATH, "cef"));
+        env::set_var(
+            "PATH",
+            format!("{};{};{}", path, cef_binary_path().display(), "cef"),
+        );
     }
 
     #[cfg(target_os = "linux")]
@@ -83,10 +86,13 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         if let Ok(ld_library_path) = env::var("LD_LIBRARY_PATH") {
             env::set_var(
                 "LD_LIBRARY_PATH",
-                format!("{}:{}", ld_library_path, CEF_BINARY_PATH),
+                format!("{}:{}", ld_library_path, cef_binary_path().display()),
             );
         } else {
-            env::set_var("LD_LIBRARY_PATH", format!("{}/", CEF_BINARY_PATH));
+            env::set_var(
+                "LD_LIBRARY_PATH",
+                format!("{}/", cef_binary_path().display()),
+            );
         }
 
         // add ./cef/ to path so that we can run "cef"
@@ -108,7 +114,7 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         fs::set_permissions(CEF_EXE_PATH, perms)?;
 
         // trying to link with dlopen will just hang the window
-        let dll_path = Path::new(CEF_BINARY_PATH).join("Chromium Embedded Framework");
+        let dll_path = Path::new(&cef_binary_path()).join("Chromium Embedded Framework");
         if !fs::metadata(&dll_path)
             .map(|m| m.is_file())
             .unwrap_or(false)

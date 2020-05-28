@@ -68,6 +68,7 @@ pub fn initialize() {
 }
 
 pub fn shutdown() {
+    debug!("async_manager::shutdown()");
     {
         let mut option = TOKIO_RUNTIME.lock().unwrap();
         if option.is_some() {
@@ -76,7 +77,7 @@ pub fn shutdown() {
                 rt.shutdown_timeout(Duration::from_millis(100));
             }
         } else {
-            debug!("tokio already shutdown?");
+            debug!("tokio already shutdown");
         }
     }
 
@@ -88,7 +89,7 @@ pub fn shutdown() {
             ASYNC_DISPATCHER_LOCAL_HANDLE.with(|cell| cell.borrow_mut().take());
             ASYNC_DISPATCHER.with(|cell| cell.borrow_mut().take());
         } else {
-            debug!("async_dispatcher already shutdown?");
+            debug!("async_dispatcher already shutdown");
         }
     }
 
@@ -98,7 +99,7 @@ pub fn shutdown() {
 
             TICK_HANDLER.with(|cell| cell.borrow_mut().take());
         } else {
-            debug!("tick_handler already shutdown?");
+            debug!("tick_handler already shutdown");
         }
     }
 }
@@ -111,6 +112,7 @@ pub fn check_should_shutdown() {
 }
 
 pub fn mark_for_shutdown() {
+    debug!("async_manager marked for shutdown");
     SHOULD_SHUTDOWN.set(true);
 }
 
