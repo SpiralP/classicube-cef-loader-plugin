@@ -58,7 +58,7 @@ pub async fn update_plugins() -> Result<()> {
     let loader_plugin = GitHubReleaseChecker::new(
         "Cef Loader".to_string(),
         "SpiralP".to_string(),
-        "rust-classicube-cef-loader-plugin".to_string(),
+        "classicube-cef-loader-plugin".to_string(),
         vec![CEF_PLUGIN_LOADER_PATH.into()],
     );
     let updated = loader_plugin.check().await?;
@@ -69,7 +69,7 @@ pub async fn update_plugins() -> Result<()> {
     let cef_plugin = GitHubReleaseChecker::new(
         "Cef".to_string(),
         "SpiralP".to_string(),
-        "rust-classicube-cef-plugin".to_string(),
+        "classicube-cef-plugin".to_string(),
         vec![CEF_PLUGIN_PATH.into(), CEF_EXE_PATH.into()],
     );
     let updated = cef_plugin.check().await?;
