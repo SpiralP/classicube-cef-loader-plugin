@@ -3,6 +3,7 @@ use crate::{
     error::*,
     plugin_updater::{CEF_EXE_PATH, CEF_PLUGIN_PATH},
 };
+use classicube_helpers::time;
 use classicube_sys::{DynamicLib_Get, DynamicLib_Load, IGameComponent, OwnedString};
 use std::{cell::Cell, ffi::CString, fs, os::raw::c_void, path::Path, ptr};
 
@@ -142,8 +143,10 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         }
     }
 
-    log::debug!("dll_load {}", CEF_PLUGIN_PATH);
-    let library = dll_load(CEF_PLUGIN_PATH)?;
+    let library = time!("dll_load", 5000, {
+        log::debug!("dll_load {}", CEF_PLUGIN_PATH);
+        dll_load(CEF_PLUGIN_PATH)?
+    });
     LIBRARY.with(|cell| cell.set(Some(library)));
 
     let plugin_component = dll_get(library, "Plugin_Component")?;
