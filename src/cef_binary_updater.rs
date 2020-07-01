@@ -17,7 +17,7 @@ use tokio::prelude::*;
 
 macro_rules! cef_version {
     () => {
-        "cef_binary_81.2.17+gb382c62+chromium-81.0.4044.113"
+        "cef_binary_83.4.0+gfd6631b+chromium-83.0.4103.106"
     };
 }
 
@@ -111,7 +111,7 @@ pub async fn check() -> Result<bool> {
             write!(f, "{}", CEF_VERSION).unwrap();
         }
 
-        print_async(format!("{}cef-binary finished downloading", color::LIME,)).await;
+        print_async(format!("{}cef-binary finished downloading", color::LIME)).await;
 
         Ok(true)
     } else {
