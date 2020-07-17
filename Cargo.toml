@@ -1,8 +1,9 @@
 [package]
 name = "classicube-cef-loader-plugin"
-version = "0.7.5"
+version = "0.7.6-alpha.0"
 authors = ["SpiralP <spiral.palmer@gmail.com>"]
 edition = "2018"
+publish = false
 
 [lib]
 crate-type = ["cdylib"]
@@ -27,3 +28,9 @@ tokio-util = { version = "0.3.1", features = ["compat"] }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.71"
+
+[package.metadata.release]
+disable-publish = true
+pre-release-commit-message = "Release {{version}}"
+post-release-commit-message = "Begin {{next_version}}"
+tag-message = "Release version {{version}}"
