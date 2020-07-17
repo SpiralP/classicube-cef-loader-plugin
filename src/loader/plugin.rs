@@ -4,8 +4,8 @@ use crate::{
     plugin_updater::{CEF_EXE_PATH, CEF_PLUGIN_PATH},
 };
 use classicube_helpers::time;
-use classicube_sys::{DynamicLib_Get, DynamicLib_Load, IGameComponent, OwnedString};
-use std::{cell::Cell, ffi::CString, fs, os::raw::c_void, path::Path, ptr};
+use classicube_sys::{DynamicLib_Get2, DynamicLib_Load2, IGameComponent, OwnedString};
+use std::{cell::Cell, ffi::CString, fs, os::raw::c_void, path::Path};
 
 thread_local!(
     static LIBRARY: Cell<Option<*mut c_void>> = Cell::new(None);
@@ -27,8 +27,8 @@ fn get_error() -> String {
 fn dll_load(path: &str) -> Result<*mut c_void> {
     let path = OwnedString::new(path);
 
-    let mut ptr = ptr::null_mut();
-    if unsafe { DynamicLib_Load(path.as_cc_string(), &mut ptr) } != 0 {
+    let ptr = unsafe { DynamicLib_Load2(path.as_cc_string()) };
+    if ptr.is_null() {
         return Err(get_error().into());
     }
 
@@ -38,8 +38,8 @@ fn dll_load(path: &str) -> Result<*mut c_void> {
 fn dll_get(library: *mut c_void, symbol_name: &str) -> Result<*mut c_void> {
     let symbol_name = CString::new(symbol_name)?;
 
-    let mut ptr = ptr::null_mut();
-    if unsafe { DynamicLib_Get(library, symbol_name.as_ptr(), &mut ptr) } != 0 {
+    let ptr = unsafe { DynamicLib_Get2(library, symbol_name.as_ptr()) };
+    if ptr.is_null() {
         return Err(get_error().into());
     }
 
