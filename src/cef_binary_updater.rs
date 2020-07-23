@@ -42,6 +42,13 @@ macro_rules! cef_arch {
     };
 }
 
+#[cfg(all(target_os = "linux", target_pointer_width = "32"))]
+macro_rules! cef_arch {
+    () => {
+        "linux32"
+    };
+}
+
 #[cfg(all(target_os = "macos", target_pointer_width = "64"))]
 macro_rules! cef_arch {
     () => {
