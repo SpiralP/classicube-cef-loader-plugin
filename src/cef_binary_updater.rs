@@ -17,7 +17,7 @@ use tokio::prelude::*;
 
 macro_rules! cef_version {
     () => {
-        "cef_binary_81.3.10+gb223419+chromium-81.0.4044.138"
+        "cef_binary_84.3.3+gffc2f0e+chromium-84.0.4147.89"
     };
 }
 
