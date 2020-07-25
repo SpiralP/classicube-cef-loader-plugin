@@ -6,46 +6,46 @@ use std::fs;
 
 // windows 64 bit
 
-#[cfg(all(target_os = "windows", target_pointer_width = "64"))]
+#[cfg(all(target_os = "windows", target_arch = "x86_64"))]
 pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_windows_x86_64.dll";
 
-#[cfg(all(target_os = "windows", target_pointer_width = "64"))]
+#[cfg(all(target_os = "windows", target_arch = "x86_64"))]
 pub const CEF_PLUGIN_PATH: &str = "cef/classicube_cef_windows_x86_64.dll";
 
-#[cfg(all(target_os = "windows", target_pointer_width = "64"))]
+#[cfg(all(target_os = "windows", target_arch = "x86_64"))]
 pub const CEF_EXE_PATH: &str = "cef/cef-windows-x86_64.exe";
 
 // windows 32 bit
 
-#[cfg(all(target_os = "windows", target_pointer_width = "32"))]
+#[cfg(all(target_os = "windows", target_arch = "x86"))]
 pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_windows_i686.dll";
 
-#[cfg(all(target_os = "windows", target_pointer_width = "32"))]
+#[cfg(all(target_os = "windows", target_arch = "x86"))]
 pub const CEF_PLUGIN_PATH: &str = "cef/classicube_cef_windows_i686.dll";
 
-#[cfg(all(target_os = "windows", target_pointer_width = "32"))]
+#[cfg(all(target_os = "windows", target_arch = "x86"))]
 pub const CEF_EXE_PATH: &str = "cef/cef-windows-i686.exe";
 
 // linux 64 bit
 
-#[cfg(all(target_os = "linux", target_pointer_width = "64"))]
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_linux_x86_64.so";
 
-#[cfg(all(target_os = "linux", target_pointer_width = "64"))]
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_linux_x86_64.so";
 
-#[cfg(all(target_os = "linux", target_pointer_width = "64"))]
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 pub const CEF_EXE_PATH: &str = "cef/cef-linux-x86_64";
 
 // linux 32 bit
 
-#[cfg(all(target_os = "linux", target_pointer_width = "32"))]
+#[cfg(all(target_os = "linux", target_arch = "x86"))]
 pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_linux_i686.so";
 
-#[cfg(all(target_os = "linux", target_pointer_width = "32"))]
+#[cfg(all(target_os = "linux", target_arch = "x86"))]
 pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_linux_i686.so";
 
-#[cfg(all(target_os = "linux", target_pointer_width = "32"))]
+#[cfg(all(target_os = "linux", target_arch = "x86"))]
 pub const CEF_EXE_PATH: &str = "cef/cef-linux-i686";
 
 // linux armhf
@@ -72,13 +72,13 @@ pub const CEF_EXE_PATH: &str = "cef/cef-linux-aarch64";
 
 // macos 64 bit
 
-#[cfg(all(target_os = "macos", target_pointer_width = "64"))]
+#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
 pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_macos_x86_64.dylib";
 
-#[cfg(all(target_os = "macos", target_pointer_width = "64"))]
+#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
 pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_macos_x86_64.dylib";
 
-#[cfg(all(target_os = "macos", target_pointer_width = "64"))]
+#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
 pub const CEF_EXE_PATH: &str = "cef/cef-macos-x86_64";
 
 pub async fn update_plugins() -> Result<()> {
