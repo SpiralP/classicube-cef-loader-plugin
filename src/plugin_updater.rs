@@ -48,6 +48,28 @@ pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_linux_i686.so";
 #[cfg(all(target_os = "linux", target_pointer_width = "32"))]
 pub const CEF_EXE_PATH: &str = "cef/cef-linux-i686";
 
+// linux armhf
+
+#[cfg(all(target_os = "linux", target_arch = "arm"))]
+pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_linux_armhf.so";
+
+#[cfg(all(target_os = "linux", target_arch = "arm"))]
+pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_linux_armhf.so";
+
+#[cfg(all(target_os = "linux", target_arch = "arm"))]
+pub const CEF_EXE_PATH: &str = "cef/cef-linux-armhf";
+
+// linux aarch64
+
+#[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_linux_aarch64.so";
+
+#[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_linux_aarch64.so";
+
+#[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+pub const CEF_EXE_PATH: &str = "cef/cef-linux-aarch64";
+
 // macos 64 bit
 
 #[cfg(all(target_os = "macos", target_pointer_width = "64"))]

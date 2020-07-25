@@ -49,6 +49,20 @@ macro_rules! cef_arch {
     };
 }
 
+#[cfg(all(target_os = "linux", target_arch = "armhf"))]
+macro_rules! cef_arch {
+    () => {
+        "linuxarm"
+    };
+}
+
+#[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+macro_rules! cef_arch {
+    () => {
+        "linuxarm64"
+    };
+}
+
 #[cfg(all(target_os = "macos", target_pointer_width = "64"))]
 macro_rules! cef_arch {
     () => {

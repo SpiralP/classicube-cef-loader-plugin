@@ -9,8 +9,8 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { arch: x86_64, bits: 64 }
-          - { arch: i686, bits: 32 }
+          - { arch: x86_64, bits: 64, target: x86_64-pc-windows-msvc }
+          - { arch: i686, bits: 32, target: i686-pc-windows-msvc }
 
     steps:
       - uses: actions/checkout@v2
@@ -24,44 +24,48 @@ jobs:
           scoop install --arch ${{ matrix.config.bits }}bit llvm
           echo "::set-env name=LIBCLANG_PATH::$HOME\scoop\apps\llvm\current\bin"
 
-      - name: Install nightly
+      - name: Install nightly ${{ matrix.config.target }}
         uses: actions-rs/toolchain@v1
         with:
-          target: ${{ matrix.config.arch }}-pc-windows-msvc
-          toolchain: nightly-${{ matrix.config.arch }}-pc-windows-msvc
+          # we have to use this toolchain because "libclang.dll: invalid DLL (32-bit)"
+          toolchain: nightly-${{ matrix.config.target }}
+          target: ${{ matrix.config.target }}
           override: true
 
       - name: Build
         uses: actions-rs/cargo@v1
         if: startsWith(github.ref, 'refs/tags/') != true
         with:
-          target: ${{ matrix.config.arch }}-pc-windows-msvc
           command: build
+          args: --target ${{ matrix.config.target }}
 
       - name: Test
         uses: actions-rs/cargo@v1
         if: startsWith(github.ref, 'refs/tags/') != true
         with:
-          target: ${{ matrix.config.arch }}-pc-windows-msvc
           command: test
-          args: -- --nocapture
+          args: --target ${{ matrix.config.target }} -- --nocapture
 
       - name: Build Release
         uses: actions-rs/cargo@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          target: ${{ matrix.config.arch }}-pc-windows-msvc
           command: build
-          args: --release
+          args: --target ${{ matrix.config.target }} --release
 
-      - run: Rename-Item -Path "target\release\classicube_cef_loader_plugin.dll" -NewName "classicube_cef_loader_windows_${{ matrix.config.arch }}.dll"
+      - name: Rename files
         if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          Move-Item `
+            -Path 'target\${{ matrix.config.target }}\release\classicube_cef_loader_plugin.dll' `
+            -Destination '.\classicube_cef_loader_windows_${{ matrix.config.arch }}.dll'
 
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: target/release/classicube_cef_loader_windows_${{ matrix.config.arch }}.dll
+          files: |
+            classicube_cef_loader_windows_${{ matrix.config.arch }}.dll
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -72,68 +76,71 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { arch: x86_64, bits: 64 }
-          - { arch: i686, bits: 32 }
+          - { arch: x86_64, target: x86_64-unknown-linux-gnu }
+          - { arch: i686, target: i686-unknown-linux-gnu }
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install 64 bit deps
-        if: matrix.config.bits == 64
+      - name: Install x86_64 deps
+        if: matrix.config.arch == 'x86_64'
         run: |
           sudo apt-get -y update \
-          && sudo apt-get -y install git curl gcc g++ build-essential pkg-config cmake clang \
+          && sudo apt-get -y install git gcc g++ build-essential cmake clang-10 pkg-config \
             libssl-dev libglib2.0-dev libpango1.0-dev libatk1.0-dev libgtk-3-dev libgdk-pixbuf2.0-dev \
             libnss3 libasound2 libxss1 libnspr4 \
 
-      - name: Install 32 bit deps
-        if: matrix.config.bits == 32
+      - name: Install i686 deps
+        if: matrix.config.arch == 'i686'
         run: |
           sudo dpkg --add-architecture i386 \
           && sudo apt-get -y update \
-          && sudo apt-get -y install git curl gcc g++ build-essential pkg-config:i386 cmake \
+          && sudo apt-get -y install git gcc g++ build-essential cmake clang-10 pkg-config:i386 \
+            gcc-multilib g++-multilib \
             libssl-dev:i386 libglib2.0-dev:i386 libpango1.0-dev:i386 libatk1.0-dev:i386 libgtk-3-dev:i386 libgdk-pixbuf2.0-dev:i386 \
-            gcc-multilib g++-multilib libclang1-10:i386 libclang-common-10-dev \
             libnss3:i386 libasound2:i386 libxss1:i386 libnspr4:i386
 
-      - name: Install nightly
+      - name: Install nightly ${{ matrix.config.target }}
         uses: actions-rs/toolchain@v1
         with:
-          target: ${{ matrix.config.arch }}-unknown-linux-gnu
           toolchain: nightly-${{ matrix.config.arch }}-unknown-linux-gnu
+          target: ${{ matrix.config.target }}
           override: true
 
       - name: Build
         uses: actions-rs/cargo@v1
         if: startsWith(github.ref, 'refs/tags/') != true
         with:
-          target: ${{ matrix.config.arch }}-unknown-linux-gnu
           command: build
+          args: --target ${{ matrix.config.target }}
 
       - name: Test
         uses: actions-rs/cargo@v1
         if: startsWith(github.ref, 'refs/tags/') != true
         with:
-          target: ${{ matrix.config.arch }}-unknown-linux-gnu
           command: test
-          args: -- --nocapture
+          args: --target ${{ matrix.config.target }} -- --nocapture
 
       - name: Build Release
         uses: actions-rs/cargo@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          target: ${{ matrix.config.arch }}-unknown-linux-gnu
           command: build
-          args: --release
+          args: --target ${{ matrix.config.target }} --release
 
-      - run: mv target/release/libclassicube_cef_loader_plugin.so "classicube_cef_loader_linux_${{ matrix.config.arch }}.so"
+      - name: Rename files
         if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          mv 'target/${{ matrix.config.target }}/release/libclassicube_cef_loader_plugin.so' \
+            './classicube_cef_loader_linux_${{ matrix.config.arch }}.so' \
+          && file './classicube_cef_loader_linux_${{ matrix.config.arch }}.so'
 
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: classicube_cef_loader_linux_${{ matrix.config.arch }}.so
+          files: |
+            classicube_cef_loader_linux_${{ matrix.config.arch }}.so
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -144,7 +151,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { arch: x86_64, bits: 64 }
+          - { arch: x86_64, bits: 64, target: x86_64-apple-darwin }
           # cef-binary doesn't have 32 bit download
           # - { arch: i686, bits: 32 }
 
@@ -153,45 +160,48 @@ jobs:
 
       - name: Install deps
         run: |
-          brew install cmake \
+          brew install cmake
 
-      - name: Install nightly
+      - name: Install nightly ${{ matrix.config.target }}
         uses: actions-rs/toolchain@v1
         with:
-          target: ${{ matrix.config.arch }}-apple-darwin
-          toolchain: nightly-${{ matrix.config.arch }}-apple-darwin
+          toolchain: nightly
+          target: ${{ matrix.config.target }}
           override: true
 
       - name: Build
         uses: actions-rs/cargo@v1
         if: startsWith(github.ref, 'refs/tags/') != true
         with:
-          target: ${{ matrix.config.arch }}-apple-darwin
           command: build
+          args: --target ${{ matrix.config.target }}
 
       - name: Test
         uses: actions-rs/cargo@v1
         if: startsWith(github.ref, 'refs/tags/') != true
         with:
-          target: ${{ matrix.config.arch }}-apple-darwin
           command: test
-          args: -- --nocapture
+          args: --target ${{ matrix.config.target }} -- --nocapture
 
       - name: Build Release
         uses: actions-rs/cargo@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          target: ${{ matrix.config.arch }}-apple-darwin
           command: build
-          args: --release
+          args: --target ${{ matrix.config.target }} --release
 
-      - run: mv target/release/libclassicube_cef_loader_plugin.dylib "classicube_cef_loader_macos_${{ matrix.config.arch }}.dylib"
+      - name: Rename files
         if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          mv 'target/${{ matrix.config.target }}/release/libclassicube_cef_loader_plugin.dylib' \
+            'classicube_cef_loader_macos_${{ matrix.config.arch }}.dylib' \
+          && file 'classicube_cef_loader_macos_${{ matrix.config.arch }}.dylib'
 
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: classicube_cef_loader_macos_${{ matrix.config.arch }}.dylib
+          files: |
+            classicube_cef_loader_macos_${{ matrix.config.arch }}.dylib
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
