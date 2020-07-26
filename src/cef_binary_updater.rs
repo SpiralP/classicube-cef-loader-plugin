@@ -21,35 +21,35 @@ macro_rules! cef_version {
     };
 }
 
-#[cfg(all(target_os = "windows", target_pointer_width = "64"))]
+#[cfg(all(target_os = "windows", target_arch = "x86_64"))]
 macro_rules! cef_arch {
     () => {
         "windows64"
     };
 }
 
-#[cfg(all(target_os = "windows", target_pointer_width = "32"))]
+#[cfg(all(target_os = "windows", target_arch = "x86"))]
 macro_rules! cef_arch {
     () => {
         "windows32"
     };
 }
 
-#[cfg(all(target_os = "linux", target_pointer_width = "64"))]
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 macro_rules! cef_arch {
     () => {
         "linux64"
     };
 }
 
-#[cfg(all(target_os = "linux", target_pointer_width = "32"))]
+#[cfg(all(target_os = "linux", target_arch = "x86"))]
 macro_rules! cef_arch {
     () => {
         "linux32"
     };
 }
 
-#[cfg(all(target_os = "linux", target_arch = "armhf"))]
+#[cfg(all(target_os = "linux", target_arch = "arm"))]
 macro_rules! cef_arch {
     () => {
         "linuxarm"
@@ -63,7 +63,7 @@ macro_rules! cef_arch {
     };
 }
 
-#[cfg(all(target_os = "macos", target_pointer_width = "64"))]
+#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
 macro_rules! cef_arch {
     () => {
         "macosx64"

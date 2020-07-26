@@ -94,7 +94,7 @@ pub async fn update_plugins() -> Result<()> {
         "classicube-cef-loader-plugin".to_string(),
         vec![CEF_PLUGIN_LOADER_PATH.into()],
     );
-    let updated = loader_plugin.check().await?;
+    let updated = loader_plugin.update().await?;
     if updated {
         had_updates = true;
     }
@@ -105,7 +105,7 @@ pub async fn update_plugins() -> Result<()> {
         "classicube-cef-plugin".to_string(),
         vec![CEF_PLUGIN_PATH.into(), CEF_EXE_PATH.into()],
     );
-    let updated = cef_plugin.check().await?;
+    let updated = cef_plugin.update().await?;
     if updated {
         had_updates = true;
     }

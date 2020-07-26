@@ -58,7 +58,7 @@ impl GitHubReleaseChecker {
             .unwrap()
     }
 
-    async fn get_latest_release(&self) -> Result<GitHubRelease> {
+    pub async fn get_latest_release(&self) -> Result<GitHubRelease> {
         let client = Self::make_client();
 
         let release: GitHubRelease = client.get(&self.url()).send().await?.json().await?;
@@ -69,7 +69,7 @@ impl GitHubReleaseChecker {
         }
     }
 
-    pub async fn check(&self) -> Result<bool> {
+    pub async fn update(&self) -> Result<bool> {
         // delete "-old" files
 
         for asset_path in &self.asset_paths {
@@ -182,19 +182,31 @@ impl GitHubReleaseChecker {
     }
 }
 
-#[derive(Deserialize)]
-struct GitHubRelease {
+#[derive(Debug, Deserialize)]
+pub struct GitHubRelease {
     /// error message
-    message: Option<String>,
+    pub message: Option<String>,
 
-    tag_name: Option<String>,
-    assets: Option<Vec<GitHubReleaseAsset>>,
-    published_at: Option<String>,
+    pub tag_name: Option<String>,
+    pub assets: Option<Vec<GitHubReleaseAsset>>,
+    pub published_at: Option<String>,
 }
 
-#[derive(Deserialize)]
-struct GitHubReleaseAsset {
-    browser_download_url: String,
-    name: String,
-    size: usize,
+#[derive(Debug, Deserialize)]
+pub struct GitHubReleaseAsset {
+    pub browser_download_url: String,
+    pub name: String,
+    pub size: usize,
+}
+
+#[tokio::test]
+async fn test_github_release_checker() {
+    let loader_plugin = GitHubReleaseChecker::new(
+        "Cef Loader".to_string(),
+        "SpiralP".to_string(),
+        "classicube-cef-loader-plugin".to_string(),
+        vec![],
+    );
+    let release = loader_plugin.get_latest_release().await.unwrap();
+    println!("{:#?}", release);
 }
