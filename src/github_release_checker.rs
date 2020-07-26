@@ -199,6 +199,7 @@ pub struct GitHubReleaseAsset {
     pub size: usize,
 }
 
+#[ignore]
 #[tokio::test]
 async fn test_github_release_checker() {
     let loader_plugin = GitHubReleaseChecker::new(
