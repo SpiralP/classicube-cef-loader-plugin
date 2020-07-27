@@ -1,7 +1,7 @@
 use crate::{async_manager, error::*, print_async, status};
 use classicube_helpers::color;
 use futures::stream::{StreamExt, TryStreamExt};
-use log::debug;
+use log::{debug, error};
 use std::{
     fs, io,
     io::{Read, Write},
@@ -297,6 +297,23 @@ async fn download(version: &str) -> Result<()> {
                             let parent = out_path.parent().unwrap();
                             fs::create_dir_all(&parent)?;
                             file.unpack(&out_path)?;
+
+                            if ext == "so" {
+                                debug!("stripping {:?}", out_path);
+                                if let Ok(output) =
+                                    std::process::Command::new("strip").arg(&out_path).output()
+                                {
+                                    if !output.status.success() {
+                                        error!(
+                                            "strip {:?}\n--- stdout\n{}\n--- stderr\n{}",
+                                            out_path,
+                                            String::from_utf8_lossy(&output.stdout),
+                                            String::from_utf8_lossy(&output.stderr)
+                                        );
+                                        bail!("couldn't strip {:?}", out_path);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
