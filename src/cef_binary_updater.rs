@@ -170,8 +170,25 @@ async fn download(version: &str) -> Result<()> {
     let downloaded = Arc::new(AtomicUsize::new(0usize));
     let response = reqwest::get(&url).await?;
 
+    let maybe_content_length = response.content_length();
+
+    if let Some(content_length) = maybe_content_length {
+        print_async(format!(
+            "{}Downloading {}{} {}({}{}MB{})",
+            color::GOLD,
+            //
+            color::GREEN,
+            "cef-binary",
+            color::GOLD,
+            //
+            color::GREEN,
+            (content_length as f32 / 1024f32 / 1024f32).ceil() as u32,
+            color::GOLD,
+        ))
+        .await;
+    }
+
     {
-        let maybe_content_length = response.content_length();
         let running = running.clone();
         let downloaded = downloaded.clone();
 
