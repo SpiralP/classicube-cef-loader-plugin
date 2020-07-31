@@ -2,7 +2,6 @@ use crate::{
     cef_binary_updater, error::*, github_release_checker::GitHubReleaseChecker, print_async,
 };
 use classicube_helpers::color;
-use std::fs;
 
 // windows 64 bit
 
@@ -81,33 +80,31 @@ pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_macos_x86_64.dylib";
 #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
 pub const CEF_EXE_PATH: &str = "cef/cef-macos-x86_64";
 
+fn github_plugins() -> Vec<GitHubReleaseChecker> {
+    vec![
+        GitHubReleaseChecker::new(
+            "Cef Loader",
+            "SpiralP",
+            "classicube-cef-loader-plugin",
+            vec![CEF_PLUGIN_LOADER_PATH.into()],
+        ),
+        GitHubReleaseChecker::new(
+            "Cef",
+            "SpiralP",
+            "classicube-cef-plugin",
+            vec![CEF_PLUGIN_PATH.into(), CEF_EXE_PATH.into()],
+        ),
+    ]
+}
+
 pub async fn update_plugins() -> Result<()> {
-    fs::create_dir_all("cef").unwrap();
-
-    cef_binary_updater::prepare();
-
     let mut had_updates = false;
 
-    let loader_plugin = GitHubReleaseChecker::new(
-        "Cef Loader".to_string(),
-        "SpiralP".to_string(),
-        "classicube-cef-loader-plugin".to_string(),
-        vec![CEF_PLUGIN_LOADER_PATH.into()],
-    );
-    let updated = loader_plugin.update().await?;
-    if updated {
-        had_updates = true;
-    }
-
-    let cef_plugin = GitHubReleaseChecker::new(
-        "Cef".to_string(),
-        "SpiralP".to_string(),
-        "classicube-cef-plugin".to_string(),
-        vec![CEF_PLUGIN_PATH.into(), CEF_EXE_PATH.into()],
-    );
-    let updated = cef_plugin.update().await?;
-    if updated {
-        had_updates = true;
+    for plugin in github_plugins() {
+        let updated = plugin.update().await?;
+        if updated {
+            had_updates = true;
+        }
     }
 
     let updated = cef_binary_updater::check().await?;

@@ -97,16 +97,18 @@ fn get_current_version() -> Option<String> {
         .ok()
 }
 
-pub fn prepare() {
+pub fn prepare() -> Result<()> {
     // cef's .bin files are locked hard so we can't do the flip/flop
     if Path::new(CEF_BINARY_VERSION_PATH_NEW).is_file() && Path::new(CEF_BINARY_PATH_NEW).is_dir() {
         if Path::new(CEF_BINARY_PATH).is_dir() {
-            fs::remove_dir_all(CEF_BINARY_PATH).unwrap();
+            fs::remove_dir_all(CEF_BINARY_PATH)?;
         }
         // mark as fully updated
-        fs::rename(CEF_BINARY_PATH_NEW, CEF_BINARY_PATH).unwrap();
-        fs::rename(CEF_BINARY_VERSION_PATH_NEW, CEF_BINARY_VERSION_PATH).unwrap();
+        fs::rename(CEF_BINARY_PATH_NEW, CEF_BINARY_PATH)?;
+        fs::rename(CEF_BINARY_VERSION_PATH_NEW, CEF_BINARY_VERSION_PATH)?;
     }
+
+    Ok(())
 }
 
 pub async fn check() -> Result<bool> {

@@ -1,17 +1,17 @@
 mod async_manager;
 mod cef_binary_updater;
+mod chat_command;
 mod error;
 mod github_release_checker;
 mod loader;
 mod logger;
 mod plugin_updater;
 
-use crate::plugin_updater::update_plugins;
 use classicube_sys::{
     Chat_Add, Chat_AddOf, IGameComponent, MsgType_MSG_TYPE_CLIENTSTATUS_2, OwnedString,
 };
 use log::{debug, info};
-use std::{os::raw::c_int, ptr};
+use std::{fs, os::raw::c_int, ptr};
 
 extern "C" fn init() {
     color_backtrace::install_with_settings(
@@ -22,21 +22,21 @@ extern "C" fn init() {
 
     debug!("Init");
 
+    fs::create_dir_all("cef").unwrap();
+    cef_binary_updater::prepare().unwrap();
+    loader::init();
+
+    // never update if debug build
+    #[cfg(not(debug_assertions))]
+    check_updates();
+
+    chat_command::initialize();
+}
+
+pub fn check_updates() {
     async_manager::initialize();
-
     async_manager::spawn(async move {
-        #[cfg(not(debug_assertions))]
-        let result = update_plugins().await;
-
-        // never update if debug build
-        #[cfg(debug_assertions)]
-        let result = if false {
-            update_plugins().await
-        } else {
-            Ok(())
-        };
-
-        if let Err(e) = result {
+        if let Err(e) = plugin_updater::update_plugins().await {
             print_async(format!(
                 "{}Failed to update: {}{}",
                 classicube_helpers::color::RED,
@@ -47,12 +47,9 @@ extern "C" fn init() {
         }
 
         async_manager::spawn_on_main_thread(async {
-            debug!("async_manager marked for shutdown");
             async_manager::mark_for_shutdown();
         });
     });
-
-    loader::init();
 }
 
 extern "C" fn free() {

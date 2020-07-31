@@ -1,6 +1,7 @@
 use crate::{error::*, print_async};
 use classicube_helpers::color;
 use futures::stream::TryStreamExt;
+use log::debug;
 use serde::Deserialize;
 use std::{
     fs, io,
@@ -20,12 +21,17 @@ pub struct GitHubReleaseChecker {
 }
 
 impl GitHubReleaseChecker {
-    pub fn new(name: String, owner: String, repo: String, asset_paths: Vec<PathBuf>) -> Self {
+    pub fn new<S: Into<String>, P: Into<Vec<PathBuf>>>(
+        name: S,
+        owner: S,
+        repo: S,
+        asset_paths: P,
+    ) -> Self {
         Self {
-            name,
-            owner,
-            repo,
-            asset_paths,
+            name: name.into(),
+            owner: owner.into(),
+            repo: repo.into(),
+            asset_paths: asset_paths.into(),
         }
     }
 
@@ -110,6 +116,7 @@ impl GitHubReleaseChecker {
 
             Ok(true)
         } else {
+            debug!("{} up to date", self.name);
             Ok(false)
         }
     }
@@ -203,9 +210,9 @@ pub struct GitHubReleaseAsset {
 #[tokio::test]
 async fn test_github_release_checker() {
     let loader_plugin = GitHubReleaseChecker::new(
-        "Cef Loader".to_string(),
-        "SpiralP".to_string(),
-        "classicube-cef-loader-plugin".to_string(),
+        "Cef Loader",
+        "SpiralP",
+        "classicube-cef-loader-plugin",
         vec![],
     );
     let release = loader_plugin.get_latest_release().await.unwrap();
