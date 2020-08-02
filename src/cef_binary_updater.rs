@@ -1,7 +1,7 @@
 use crate::{async_manager, error::*, print_async, status};
 use classicube_helpers::color;
 use futures::stream::{StreamExt, TryStreamExt};
-use log::{debug, error};
+use log::*;
 use std::{
     fs, io,
     io::{Read, Write},
@@ -284,6 +284,16 @@ async fn download(version: &str) -> Result<()> {
             let mut trimmed_path_components = trimmed_path.components();
 
             if let Some(Component::Normal(first_part)) = trimmed_path_components.next() {
+                if first_part == "README.txt" || first_part == "LICENSE.txt" {
+                    let out_path = Path::new(CEF_BINARY_PATH_NEW).join(&first_part);
+                    debug!("{:?} {:?}", path, out_path);
+
+                    fs::create_dir_all(&out_path.parent().unwrap())?;
+                    file.unpack(&out_path)?;
+                    continue;
+                }
+
+                // windows/linux extract files to cef/cef_binary/
                 #[cfg(not(target_os = "macos"))]
                 {
                     if let Some(ext) = trimmed_path.extension() {
@@ -296,8 +306,7 @@ async fn download(version: &str) -> Result<()> {
                             let out_path = Path::new(CEF_BINARY_PATH_NEW).join(&even_more_trimmed);
                             debug!("{:?} {:?}", path, out_path);
 
-                            let parent = out_path.parent().unwrap();
-                            fs::create_dir_all(&parent)?;
+                            fs::create_dir_all(&out_path.parent().unwrap())?;
                             file.unpack(&out_path)?;
 
                             if ext == "so" {
@@ -320,7 +329,7 @@ async fn download(version: &str) -> Result<()> {
                     }
                 }
 
-                // mac needs to extract Chromium Embedded Framework.framework to cef/
+                // extract "Chromium Embedded Framework.framework" to "cef/Chromium Embedded Framework.framework"
                 #[cfg(target_os = "macos")]
                 {
                     if first_part == "Release" {
@@ -332,8 +341,7 @@ async fn download(version: &str) -> Result<()> {
                                     Path::new(CEF_BINARY_PATH_NEW).join(&even_more_trimmed);
                                 debug!("{:?} {:?}", path, out_path);
 
-                                let parent = out_path.parent().unwrap();
-                                fs::create_dir_all(&parent)?;
+                                fs::create_dir_all(&out_path.parent().unwrap())?;
                                 file.unpack(&out_path)?;
                             }
                         }
