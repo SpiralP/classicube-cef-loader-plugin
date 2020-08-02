@@ -2,6 +2,7 @@ use crate::{
     cef_binary_updater, error::*, github_release_checker::GitHubReleaseChecker, print_async,
 };
 use classicube_helpers::color;
+use futures::{prelude::*, stream};
 
 // windows 64 bit
 
@@ -80,36 +81,47 @@ pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_macos_x86_64.dylib";
 #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
 pub const CEF_EXE_PATH: &str = "cef/cef-macos-x86_64";
 
-fn github_plugins() -> Vec<GitHubReleaseChecker> {
+fn plugin_futures() -> Vec<impl Future<Output = Result<bool>>> {
     vec![
-        GitHubReleaseChecker::new(
-            "Cef Loader",
-            "SpiralP",
-            "classicube-cef-loader-plugin",
-            vec![CEF_PLUGIN_LOADER_PATH.into()],
-        ),
-        GitHubReleaseChecker::new(
-            "Cef",
-            "SpiralP",
-            "classicube-cef-plugin",
-            vec![CEF_PLUGIN_PATH.into(), CEF_EXE_PATH.into()],
-        ),
+        async {
+            GitHubReleaseChecker::new(
+                "Cef Loader",
+                "SpiralP",
+                "classicube-cef-loader-plugin",
+                vec![CEF_PLUGIN_LOADER_PATH.into()],
+            )
+            .update()
+            .await
+        }
+        .boxed(),
+        async {
+            GitHubReleaseChecker::new(
+                "Cef",
+                "SpiralP",
+                "classicube-cef-plugin",
+                vec![CEF_PLUGIN_PATH.into(), CEF_EXE_PATH.into()],
+            )
+            .update()
+            .await
+        }
+        .boxed(),
+        async { cef_binary_updater::check().await }.boxed(),
     ]
 }
 
 pub async fn update_plugins() -> Result<()> {
     let mut had_updates = false;
 
-    for plugin in github_plugins() {
-        let updated = plugin.update().await?;
+    let results = stream::iter(plugin_futures())
+        .buffer_unordered(4)
+        .collect::<Vec<Result<bool>>>()
+        .await;
+
+    for result in results {
+        let updated = result?;
         if updated {
             had_updates = true;
         }
-    }
-
-    let updated = cef_binary_updater::check().await?;
-    if updated {
-        had_updates = true;
     }
 
     if had_updates {

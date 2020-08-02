@@ -71,6 +71,8 @@ impl GitHubReleaseChecker {
     }
 
     pub async fn update(&self) -> Result<bool> {
+        debug!("checking {:?}", self.name);
+
         // delete "-old" files
         // and check if we are missing any assets
         let mut missing_asset = false;
