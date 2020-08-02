@@ -82,30 +82,28 @@ pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_macos_x86_64.dylib";
 pub const CEF_EXE_PATH: &str = "cef/cef-macos-x86_64";
 
 fn plugin_futures() -> Vec<impl Future<Output = Result<bool>>> {
+    macro_rules! add {
+        ($future:expr) => {{
+            async { $future.await }.boxed()
+        }};
+    }
+
     vec![
-        async {
-            GitHubReleaseChecker::new(
-                "Cef Loader",
-                "SpiralP",
-                "classicube-cef-loader-plugin",
-                vec![CEF_PLUGIN_LOADER_PATH.into()],
-            )
-            .update()
-            .await
-        }
-        .boxed(),
-        async {
-            GitHubReleaseChecker::new(
-                "Cef",
-                "SpiralP",
-                "classicube-cef-plugin",
-                vec![CEF_PLUGIN_PATH.into(), CEF_EXE_PATH.into()],
-            )
-            .update()
-            .await
-        }
-        .boxed(),
-        async { cef_binary_updater::check().await }.boxed(),
+        add!(GitHubReleaseChecker::new(
+            "Cef Loader",
+            "SpiralP",
+            "classicube-cef-loader-plugin",
+            vec![CEF_PLUGIN_LOADER_PATH.into()],
+        )
+        .update()),
+        add!(GitHubReleaseChecker::new(
+            "Cef",
+            "SpiralP",
+            "classicube-cef-plugin",
+            vec![CEF_PLUGIN_PATH.into(), CEF_EXE_PATH.into()],
+        )
+        .update()),
+        add!(cef_binary_updater::check()),
     ]
 }
 
