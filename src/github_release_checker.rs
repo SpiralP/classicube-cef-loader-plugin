@@ -3,11 +3,8 @@ use classicube_helpers::color;
 use futures::stream::TryStreamExt;
 use log::debug;
 use serde::Deserialize;
-use std::{
-    fs, io,
-    io::{Read, Write},
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
+use tokio::{fs, io};
 
 const VERSIONS_DIR_PATH: &str = "cef";
 
@@ -47,14 +44,12 @@ impl GitHubReleaseChecker {
         )
     }
 
-    fn get_current_version(&self) -> Option<String> {
-        fs::File::open(&self.version_path())
-            .map(|mut f| {
-                let mut s = String::new();
-                f.read_to_string(&mut s).unwrap();
-                s
-            })
-            .ok()
+    async fn get_current_version(&self) -> Option<String> {
+        if let Ok(bytes) = fs::read(&self.version_path()).await {
+            String::from_utf8(bytes).ok()
+        } else {
+            None
+        }
     }
 
     fn make_client() -> reqwest::Client {
@@ -77,27 +72,39 @@ impl GitHubReleaseChecker {
 
     pub async fn update(&self) -> Result<bool> {
         // delete "-old" files
-
+        // and check if we are missing any assets
+        let mut missing_asset = false;
         for asset_path in &self.asset_paths {
             let asset_name = asset_path.file_name().unwrap().to_str().unwrap();
 
             let parent = asset_path.parent().unwrap();
+            let wanted_path = Path::new(&parent).join(&asset_name);
             let old_path = Path::new(&parent).join(format!("{}-old", &asset_name));
 
             // ignore error
-            drop(fs::remove_file(&old_path));
-        }
+            let _ = fs::remove_file(&old_path);
 
-        let current_version = self.get_current_version().unwrap_or_default();
+            if !wanted_path.exists() {
+                debug!("missing {:?}", missing_asset);
+                missing_asset = true;
+            }
+        }
 
         let release = self.get_latest_release().await?;
 
-        if &current_version != release.published_at.as_ref().unwrap() {
+        let needs_update = missing_asset
+            || self
+                .get_current_version()
+                .await
+                .map(|cur| cur != release.published_at)
+                .unwrap_or(true);
+
+        if needs_update {
             print_async(format!(
                 "{}New release update {}{} {}for {}{}!",
                 color::PINK,
                 color::GREEN,
-                release.tag_name.as_ref().unwrap(),
+                release.tag_name,
                 color::PINK,
                 color::LIME,
                 self.name
@@ -108,8 +115,7 @@ impl GitHubReleaseChecker {
 
             {
                 // mark that we updated
-                let mut f = fs::File::create(&self.version_path()).unwrap();
-                write!(f, "{}", release.published_at.as_ref().unwrap()).unwrap();
+                fs::write(&self.version_path(), release.published_at).await?;
             }
 
             print_async(format!("{}{} finished downloading", color::LIME, self.name)).await;
@@ -127,8 +133,6 @@ impl GitHubReleaseChecker {
 
             let asset = release
                 .assets
-                .as_ref()
-                .unwrap()
                 .iter()
                 .find(|asset| asset.name == asset_name)
                 .chain_err(|| format!("couldn't find asset {}", asset_name))?;
@@ -152,29 +156,29 @@ impl GitHubReleaseChecker {
             let new_path = Path::new(&parent).join(format!("{}-new", &asset_name));
             let old_path = Path::new(&parent).join(format!("{}-old", &asset_name));
             {
-                let mut f = tokio::fs::File::create(&new_path).await?;
+                let mut f = fs::File::create(&new_path).await?;
 
-                let mut stream = tokio::io::stream_reader(
+                let mut stream = io::stream_reader(
                     Self::make_client()
                         .get(&asset.browser_download_url)
                         .send()
                         .await?
                         .bytes_stream()
-                        .map_err(|e| io::Error::new(io::ErrorKind::Other, e)),
+                        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e)),
                 );
 
-                tokio::io::copy(&mut stream, &mut f).await?;
+                io::copy(&mut stream, &mut f).await?;
             }
 
             if wanted_path.is_file() {
                 // we need to flip/flop files
 
                 // rename current loaded to -old
-                fs::rename(&wanted_path, &old_path)?;
+                fs::rename(&wanted_path, &old_path).await?;
             }
 
             // rename downloaded to wanted_path
-            fs::rename(&new_path, &wanted_path)?;
+            fs::rename(&new_path, &wanted_path).await?;
 
             print_async(format!(
                 "{}Finished downloading {}{}",
@@ -194,9 +198,9 @@ pub struct GitHubRelease {
     /// error message
     pub message: Option<String>,
 
-    pub tag_name: Option<String>,
-    pub assets: Option<Vec<GitHubReleaseAsset>>,
-    pub published_at: Option<String>,
+    pub tag_name: String,
+    pub assets: Vec<GitHubReleaseAsset>,
+    pub published_at: String,
 }
 
 #[derive(Debug, Deserialize)]
