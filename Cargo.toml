@@ -15,19 +15,19 @@ classicube-helpers = { git = "https://github.com/SpiralP/rust-classicube-helpers
 classicube-sys = { git = "https://github.com/SpiralP/rust-classicube-sys.git" }
 color-backtrace = { git = "https://github.com/SpiralP/color-backtrace-msgbox.git" }
 env_logger = "0.7.1"
-error-chain = "0.12.2"
+error-chain = "0.12.3"
 futures = { version = "0.3.5", features = ["compat", "io-compat"] }
 futures-timer = "3.0.2"
 lazy_static = "1.4.0"
 log = "0.4.11"
-reqwest = { version = "0.10.6", features = ["json", "stream"] }
+reqwest = { version = "0.10.7", features = ["json", "stream"] }
 serde = { version = "1.0.114", features = ["derive"] }
 tar = "0.4.29"
-tokio = { version = "0.2.21", features = ["full"] }
+tokio = { version = "0.2.22", features = ["full"] }
 tokio-util = { version = "0.3.1", features = ["compat"] }
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.72"
+libc = "0.2.74"
 
 
 [package.metadata.release]
