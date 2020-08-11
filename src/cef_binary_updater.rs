@@ -168,6 +168,8 @@ async fn download(version: &str) -> Result<()> {
     )
     .replace("+", "%2B");
 
+    debug!("{}", url);
+
     let running = Arc::new(AtomicBool::new(true));
     let downloaded = Arc::new(AtomicUsize::new(0usize));
     let response = reqwest::get(&url).await?;
@@ -191,11 +193,16 @@ async fn download(version: &str) -> Result<()> {
     }
 
     {
-        let running = running.clone();
+        let running = Arc::downgrade(&running);
         let downloaded = downloaded.clone();
 
         async_manager::spawn_on_main_thread(async move {
-            while running.load(Ordering::SeqCst) {
+            while let Some(running) = running.upgrade() {
+                if !running.load(Ordering::SeqCst) {
+                    debug!("status loop no longer running");
+                    break;
+                }
+
                 let downloaded = downloaded.load(Ordering::SeqCst);
 
                 let message = if let Some(content_length) = maybe_content_length {
@@ -217,6 +224,8 @@ async fn download(version: &str) -> Result<()> {
 
                 async_manager::sleep(Duration::from_secs(1)).await;
             }
+
+            debug!("status loop finished");
         });
     }
 

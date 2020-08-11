@@ -87,7 +87,7 @@ impl GitHubReleaseChecker {
             let _ = fs::remove_file(&old_path);
 
             if !wanted_path.exists() {
-                debug!("missing {:?}", missing_asset);
+                debug!("missing {:?}", wanted_path);
                 missing_asset = true;
             }
         }
