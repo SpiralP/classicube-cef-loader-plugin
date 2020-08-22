@@ -10,10 +10,10 @@ crate-type = ["cdylib"]
 
 [dependencies]
 async-dispatcher = { git = "https://github.com/SpiralP/rust-async-dispatcher.git" }
+backtrace = "0.3.50"
 bzip2 = { version = "0.4.1", features = ["tokio"] }
 classicube-helpers = { git = "https://github.com/SpiralP/rust-classicube-helpers.git" }
 classicube-sys = { git = "https://github.com/SpiralP/rust-classicube-sys.git" }
-color-backtrace = { git = "https://github.com/SpiralP/color-backtrace-msgbox.git" }
 env_logger = "0.7.1"
 error-chain = "0.12.3"
 futures = { version = "0.3.5", features = ["compat", "io-compat"] }

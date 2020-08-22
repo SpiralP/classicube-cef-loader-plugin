@@ -34,6 +34,10 @@ fn handle_command(args: Vec<String>) {
             crate::check_updates();
         }
 
+        ["crash"] | ["panic"] => {
+            panic!("here's your crash!");
+        }
+
         _ => {
             print("/client CefLoader [update]");
         }
