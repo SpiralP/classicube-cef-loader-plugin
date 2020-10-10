@@ -214,7 +214,7 @@ dependencies = [
 
 [[package]]
 name = "classicube-cef-loader-plugin"
-version = "0.8.9-alpha.0"
+version = "0.8.9"
 dependencies = [
  "async-dispatcher",
  "backtrace",
