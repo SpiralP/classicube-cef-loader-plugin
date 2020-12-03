@@ -14,7 +14,7 @@ backtrace = "0.3"
 bzip2 = { version = "0.4", features = ["tokio"] }
 classicube-helpers = { git = "https://github.com/SpiralP/rust-classicube-helpers.git" }
 classicube-sys = { git = "https://github.com/SpiralP/rust-classicube-sys.git" }
-env_logger = "0.7"
+env_logger = "0.8"
 error-chain = "0.12"
 futures = { version = "0.3", features = ["compat", "io-compat"] }
 futures-timer = "3.0"
