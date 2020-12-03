@@ -116,7 +116,7 @@ pub async fn check() -> Result<bool> {
 
     if current_version != CEF_VERSION {
         print_async(format!(
-            "{}Updating {}cef-binary {}to {}{}",
+            "{}Updating {}CEF Binary {}to {}{}",
             color::PINK,
             color::LIME,
             color::PINK,
@@ -134,7 +134,7 @@ pub async fn check() -> Result<bool> {
             write!(f, "{}", CEF_VERSION).unwrap();
         }
 
-        print_async(format!("{}cef-binary finished downloading", color::LIME)).await;
+        print_async(format!("{}CEF Binary finished downloading", color::LIME)).await;
 
         Ok(true)
     } else {
@@ -162,11 +162,7 @@ async fn download(version: &str) -> Result<()> {
     use futures::compat::{Compat, Compat01As03};
     use tokio_util::compat::{FuturesAsyncReadCompatExt, Tokio02AsyncReadCompatExt};
 
-    let url = format!(
-        "http://opensource.spotify.com/cefbuilds/{}.tar.bz2",
-        version
-    )
-    .replace("+", "%2B");
+    let url = format!("https://cef-builds.spotifycdn.com/{}.tar.bz2", version).replace("+", "%2B");
 
     debug!("{}", url);
 
@@ -182,7 +178,7 @@ async fn download(version: &str) -> Result<()> {
             color::GOLD,
             //
             color::GREEN,
-            "cef-binary",
+            "CEF Binary",
             color::GOLD,
             //
             color::GREEN,

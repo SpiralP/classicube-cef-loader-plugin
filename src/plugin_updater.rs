@@ -3,6 +3,7 @@ use crate::{
 };
 use classicube_helpers::color;
 use futures::{prelude::*, stream};
+use log::debug;
 
 // windows 64 bit
 
@@ -90,14 +91,14 @@ fn plugin_futures() -> Vec<impl Future<Output = Result<bool>>> {
 
     vec![
         add!(GitHubReleaseChecker::new(
-            "Cef Loader",
+            "CEF Loader Plugin",
             "SpiralP",
             "classicube-cef-loader-plugin",
             vec![CEF_PLUGIN_LOADER_PATH.into()],
         )
         .update()),
         add!(GitHubReleaseChecker::new(
-            "Cef",
+            "CEF Plugin",
             "SpiralP",
             "classicube-cef-plugin",
             vec![CEF_PLUGIN_PATH.into(), CEF_EXE_PATH.into()],
@@ -124,10 +125,12 @@ pub async fn update_plugins() -> Result<()> {
 
     if had_updates {
         print_async(format!(
-            "{}Everything done, restart your game to finish the update!",
-            color::YELLOW
+            "{}CEF finished downloading and will update on next launch",
+            color::SILVER
         ))
         .await;
+    } else {
+        debug!("everything up to date");
     }
 
     Ok(())
