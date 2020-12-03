@@ -1,5 +1,5 @@
 use crate::print;
-use classicube_sys::OwnedChatCommand;
+use classicube_sys::{cc_string, OwnedChatCommand};
 use log::*;
 use std::{cell::RefCell, os::raw::c_int, slice};
 
@@ -18,7 +18,7 @@ pub fn initialize() {
     });
 }
 
-extern "C" fn c_chat_command_callback(args: *const classicube_sys::String, args_count: c_int) {
+extern "C" fn c_chat_command_callback(args: *const cc_string, args_count: c_int) {
     let args = unsafe { slice::from_raw_parts(args, args_count as _) };
     let args: Vec<String> = args.iter().map(|cc_string| cc_string.to_string()).collect();
 
