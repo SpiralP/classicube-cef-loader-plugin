@@ -19,7 +19,10 @@ extern "C" fn init() {
 
     logger::initialize(true, false);
 
-    debug!("Init");
+    debug!(
+        "Init {}",
+        concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"))
+    );
 
     fs::create_dir_all("cef").unwrap();
     cef_binary_updater::prepare().unwrap();
