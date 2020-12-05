@@ -35,6 +35,7 @@ extern "C" fn init() {
         async_manager::spawn(async move {
             loop {
                 if let Err(e) = plugin_updater::update_plugins().await {
+                    error!("{:#?}", e);
                     print_async(format!(
                         "{}Failed to update CEF: {}{}",
                         classicube_helpers::color::RED,
@@ -46,8 +47,8 @@ extern "C" fn init() {
                     break;
                 }
 
-                // check again every hour
-                async_manager::sleep(std::time::Duration::from_secs(1 * 60 * 60)).await;
+                // check again every 2 hours
+                async_manager::sleep(std::time::Duration::from_secs(2 * 60 * 60)).await;
                 debug!("it's been an hour, checking for updates again");
             }
         });

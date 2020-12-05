@@ -10,6 +10,11 @@ const VERSIONS_DIR_PATH: &str = "cef";
 
 const APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
+#[derive(Debug, Deserialize)]
+struct GitHubError {
+    message: String,
+}
+
 pub struct GitHubReleaseChecker {
     name: String,
     owner: String,
@@ -62,11 +67,12 @@ impl GitHubReleaseChecker {
     pub async fn get_latest_release(&self) -> Result<GitHubRelease> {
         let client = Self::make_client();
 
-        let release: GitHubRelease = client.get(&self.url()).send().await?.json().await?;
-        if let Some(err) = release.message {
-            Err(err.into())
+        let bytes = client.get(&self.url()).send().await?.bytes().await?;
+
+        if let Ok(error) = serde_json::from_slice::<GitHubError>(&bytes) {
+            bail!("{}", error.message);
         } else {
-            Ok(release)
+            Ok::<_, Error>(serde_json::from_slice::<GitHubRelease>(&bytes)?)
         }
     }
 

@@ -33,6 +33,7 @@ fn handle_command(args: Vec<String>) {
         ["update"] | ["check"] => {
             async_manager::spawn(async move {
                 if let Err(e) = plugin_updater::update_plugins().await {
+                    error!("{:#?}", e);
                     print_async(format!(
                         "{}Failed to update CEF: {}{}",
                         classicube_helpers::color::RED,

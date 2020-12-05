@@ -10,5 +10,6 @@ error_chain! {
         Reqwest(reqwest::Error);
         Tokio(tokio::task::JoinError);
         Nul(::std::ffi::NulError);
+        SerdeJson(serde_json::Error);
     }
 }
