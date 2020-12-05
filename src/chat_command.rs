@@ -1,4 +1,4 @@
-use crate::print;
+use crate::{async_manager, plugin_updater, print, print_async};
 use classicube_sys::{cc_string, OwnedChatCommand};
 use log::*;
 use std::{cell::RefCell, os::raw::c_int, slice};
@@ -31,7 +31,23 @@ fn handle_command(args: Vec<String>) {
     let args: Vec<&str> = args.iter().map(AsRef::as_ref).collect();
     match args.as_slice() {
         ["update"] | ["check"] => {
-            crate::check_updates();
+            async_manager::spawn(async move {
+                if let Err(e) = plugin_updater::update_plugins().await {
+                    print_async(format!(
+                        "{}Failed to update CEF: {}{}",
+                        classicube_helpers::color::RED,
+                        classicube_helpers::color::WHITE,
+                        e
+                    ))
+                    .await;
+                } else {
+                    print_async(format!(
+                        "{}No new CEF updates!",
+                        classicube_helpers::color::LIME
+                    ))
+                    .await;
+                }
+            });
         }
 
         ["crash"] | ["panic"] => {

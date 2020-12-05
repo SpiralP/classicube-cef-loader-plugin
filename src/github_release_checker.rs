@@ -1,7 +1,7 @@
 use crate::{error::*, print_async};
 use classicube_helpers::color;
 use futures::stream::TryStreamExt;
-use log::debug;
+use log::*;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use tokio::{fs, io};
@@ -83,8 +83,12 @@ impl GitHubReleaseChecker {
             let wanted_path = Path::new(&parent).join(&asset_name);
             let old_path = Path::new(&parent).join(format!("{}-old", &asset_name));
 
-            // ignore error
-            let _ = fs::remove_file(&old_path);
+            if let Err(e) = fs::remove_file(&old_path).await {
+                // don't show error
+                if e.kind() != io::ErrorKind::NotFound {
+                    warn!("couldn't remove {:?}: {:#?}", &old_path, e);
+                }
+            }
 
             if !wanted_path.exists() {
                 debug!("missing {:?}", wanted_path);
@@ -175,8 +179,19 @@ impl GitHubReleaseChecker {
             if wanted_path.is_file() {
                 // we need to flip/flop files
 
-                // rename current loaded to -old
-                fs::rename(&wanted_path, &old_path).await?;
+                // try to rename current loaded to -old
+                if let Err(e) = fs::rename(&wanted_path, &old_path).await {
+                    // if we can't rename to -old, it's probably still loaded
+                    // and we're updating a second time,
+                    // so try to delete current file which is probably not loaded
+                    if let Err(e2) = fs::remove_file(&wanted_path).await {
+                        bail!("failed to rename current file: {} and {}", e, e2);
+                    } else {
+                        debug!("deleted {:?} ok", &wanted_path);
+                    }
+                } else {
+                    debug!("renamed {:?} -> {:?} ok", &wanted_path, &old_path);
+                }
             }
 
             // rename downloaded to wanted_path

@@ -1,15 +1,10 @@
 use async_dispatcher::{Dispatcher, DispatcherHandle, LocalDispatcherHandle};
-use classicube_helpers::{tick::TickEventHandler, CellGetSet, OptionWithInner};
+use classicube_helpers::{tick::TickEventHandler, OptionWithInner};
 use futures::{future::Either, prelude::*};
 use futures_timer::Delay;
 use lazy_static::lazy_static;
 use log::debug;
-use std::{
-    cell::{Cell, RefCell},
-    future::Future,
-    sync::Mutex,
-    time::Duration,
-};
+use std::{cell::RefCell, future::Future, sync::Mutex, time::Duration};
 use tokio::task::{JoinError, JoinHandle};
 
 thread_local!(
@@ -31,10 +26,6 @@ lazy_static! {
 
 thread_local!(
     static TICK_HANDLER: RefCell<Option<TickEventHandler>> = Default::default();
-);
-
-thread_local!(
-    static SHOULD_SHUTDOWN: Cell<bool> = Cell::new(false);
 );
 
 pub fn initialize() {
@@ -102,18 +93,6 @@ pub fn shutdown() {
             debug!("tick_handler already shutdown");
         }
     }
-}
-
-pub fn check_should_shutdown() {
-    if SHOULD_SHUTDOWN.get() {
-        SHOULD_SHUTDOWN.set(false);
-        shutdown();
-    }
-}
-
-pub fn mark_for_shutdown() {
-    debug!("async_manager marked for shutdown");
-    SHOULD_SHUTDOWN.set(true);
 }
 
 pub fn step() {

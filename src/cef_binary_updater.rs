@@ -95,6 +95,17 @@ fn get_current_version() -> Option<String> {
             s
         })
         .ok()
+        .or_else(|| {
+            // also check cef_binary.txt-new file because
+            // we might be updating twice in a row
+            fs::File::open(CEF_BINARY_VERSION_PATH_NEW)
+                .map(|mut f| {
+                    let mut s = String::new();
+                    f.read_to_string(&mut s).unwrap();
+                    s
+                })
+                .ok()
+        })
 }
 
 pub fn prepare() -> Result<()> {
@@ -111,7 +122,7 @@ pub fn prepare() -> Result<()> {
     Ok(())
 }
 
-pub async fn check() -> Result<bool> {
+pub async fn update() -> Result<bool> {
     let current_version = get_current_version().unwrap_or_default();
 
     if current_version != CEF_VERSION {
@@ -125,13 +136,18 @@ pub async fn check() -> Result<bool> {
         ))
         .await;
 
-        fs::create_dir_all(CEF_BINARY_PATH_NEW).unwrap();
-        download(CEF_VERSION).await?;
+        {
+            if Path::new(CEF_BINARY_PATH_NEW).is_dir() {
+                fs::remove_dir_all(CEF_BINARY_PATH_NEW)?;
+            }
+            fs::create_dir_all(CEF_BINARY_PATH_NEW)?;
+            download(CEF_VERSION).await?;
+        }
 
         {
             // mark as half-updated
-            let mut f = fs::File::create(CEF_BINARY_VERSION_PATH_NEW).unwrap();
-            write!(f, "{}", CEF_VERSION).unwrap();
+            let mut f = fs::File::create(CEF_BINARY_VERSION_PATH_NEW)?;
+            write!(f, "{}", CEF_VERSION)?;
         }
 
         print_async(format!("{}CEF Binary finished downloading", color::LIME)).await;

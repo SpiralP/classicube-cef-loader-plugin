@@ -104,7 +104,7 @@ fn plugin_futures() -> Vec<impl Future<Output = Result<bool>>> {
             vec![CEF_PLUGIN_PATH.into(), CEF_EXE_PATH.into()],
         )
         .update()),
-        add!(cef_binary_updater::check()),
+        add!(cef_binary_updater::update()),
     ]
 }
 

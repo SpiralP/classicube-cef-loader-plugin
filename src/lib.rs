@@ -25,30 +25,33 @@ extern "C" fn init() {
     cef_binary_updater::prepare().unwrap();
     loader::init();
 
+    chat_command::initialize();
+
+    async_manager::initialize();
+
     // never update if debug build
     #[cfg(not(debug_assertions))]
-    check_updates();
+    {
+        async_manager::spawn(async move {
+            loop {
+                if let Err(e) = plugin_updater::update_plugins().await {
+                    print_async(format!(
+                        "{}Failed to update CEF: {}{}",
+                        classicube_helpers::color::RED,
+                        classicube_helpers::color::WHITE,
+                        e
+                    ))
+                    .await;
 
-    chat_command::initialize();
-}
+                    break;
+                }
 
-pub fn check_updates() {
-    async_manager::initialize();
-    async_manager::spawn(async move {
-        if let Err(e) = plugin_updater::update_plugins().await {
-            print_async(format!(
-                "{}Failed to update: {}{}",
-                classicube_helpers::color::RED,
-                classicube_helpers::color::WHITE,
-                e
-            ))
-            .await;
-        }
-
-        async_manager::spawn_on_main_thread(async {
-            async_manager::mark_for_shutdown();
+                // check again every hour
+                async_manager::sleep(std::time::Duration::from_secs(1 * 60 * 60)).await;
+                debug!("it's been an hour, checking for updates again");
+            }
         });
-    });
+    }
 }
 
 extern "C" fn free() {
@@ -63,24 +66,18 @@ extern "C" fn reset() {
     debug!("Reset");
 
     loader::reset();
-
-    async_manager::check_should_shutdown();
 }
 
 extern "C" fn on_new_map() {
     debug!("OnNewMap");
 
     loader::on_new_map();
-
-    async_manager::check_should_shutdown();
 }
 
 extern "C" fn on_new_map_loaded() {
     debug!("OnNewMapLoaded");
 
     loader::on_new_map_loaded();
-
-    async_manager::check_should_shutdown();
 }
 
 #[no_mangle]
