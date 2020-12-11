@@ -32,21 +32,27 @@ fn handle_command(args: Vec<String>) {
     match args.as_slice() {
         ["update"] | ["check"] => {
             async_manager::spawn(async move {
-                if let Err(e) = plugin_updater::update_plugins().await {
-                    error!("{:#?}", e);
-                    print_async(format!(
-                        "{}Failed to update CEF: {}{}",
-                        classicube_helpers::color::RED,
-                        classicube_helpers::color::WHITE,
-                        e
-                    ))
-                    .await;
-                } else {
-                    print_async(format!(
-                        "{}No new CEF updates!",
-                        classicube_helpers::color::LIME
-                    ))
-                    .await;
+                match plugin_updater::update_plugins().await {
+                    Ok(had_updates) => {
+                        if !had_updates {
+                            print_async(format!(
+                                "{}No new CEF updates!",
+                                classicube_helpers::color::LIME
+                            ))
+                            .await;
+                        }
+                    }
+
+                    Err(e) => {
+                        error!("{:#?}", e);
+                        print_async(format!(
+                            "{}Failed to update CEF: {}{}",
+                            classicube_helpers::color::RED,
+                            classicube_helpers::color::WHITE,
+                            e
+                        ))
+                        .await;
+                    }
                 }
             });
         }

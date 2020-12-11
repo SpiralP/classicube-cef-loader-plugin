@@ -108,7 +108,7 @@ fn plugin_futures() -> Vec<impl Future<Output = Result<bool>>> {
     ]
 }
 
-pub async fn update_plugins() -> Result<()> {
+pub async fn update_plugins() -> Result<bool> {
     let mut had_updates = false;
 
     let results = stream::iter(plugin_futures())
@@ -133,5 +133,5 @@ pub async fn update_plugins() -> Result<()> {
         debug!("everything up to date");
     }
 
-    Ok(())
+    Ok(had_updates)
 }
