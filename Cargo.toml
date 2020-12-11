@@ -33,6 +33,7 @@ libc = "0.2"
 
 [package.metadata.release]
 disable-publish = true
+tag-message = "Release version {{version}}"
 pre-release-commit-message = "Release {{version}}"
 post-release-commit-message = "Begin {{next_version}}"
-tag-message = "Release version {{version}}"
+dev-version-ext = "alpha"
