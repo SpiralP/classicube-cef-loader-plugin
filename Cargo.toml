@@ -17,12 +17,12 @@ classicube-sys = { git = "https://github.com/SpiralP/rust-classicube-sys.git" }
 env_logger = "0.8"
 error-chain = "0.12"
 futures = { version = "0.3", features = ["compat", "io-compat"] }
-futures-timer = "3.0"
-lazy_static = "1.4"
+futures-timer = "3"
+lazy_static = "1"
 log = "0.4"
 reqwest = { version = "0.10", features = ["json", "stream"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 tar = "0.4"
 tokio = { version = "0.2", features = ["full"] }
 tokio-util = { version = "0.3", features = ["compat"] }
