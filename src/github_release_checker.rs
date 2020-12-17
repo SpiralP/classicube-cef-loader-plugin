@@ -1,10 +1,10 @@
 use crate::{error::*, print_async};
 use classicube_helpers::color;
 use futures::stream::TryStreamExt;
-use log::*;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use tokio::{fs, io};
+use tracing::*;
 
 const VERSIONS_DIR_PATH: &str = "cef";
 

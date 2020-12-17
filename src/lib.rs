@@ -11,8 +11,8 @@ mod plugin_updater;
 use classicube_sys::{
     Chat_Add, Chat_AddOf, IGameComponent, MsgType_MSG_TYPE_CLIENTSTATUS_2, OwnedString,
 };
-use log::*;
 use std::{fs, os::raw::c_int, ptr};
+use tracing::*;
 
 extern "C" fn init() {
     panic::install_hook();

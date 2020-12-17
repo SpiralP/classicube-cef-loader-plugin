@@ -1,7 +1,7 @@
 use crate::{async_manager, error::*, print_async, status};
 use classicube_helpers::color;
 use futures::stream::{StreamExt, TryStreamExt};
-use log::*;
+use tracing::*;
 use std::{
     fs, io,
     io::{Read, Write},

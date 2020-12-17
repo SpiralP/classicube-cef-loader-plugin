@@ -1,7 +1,7 @@
 use crate::{async_manager, plugin_updater, print, print_async};
 use classicube_sys::{cc_string, OwnedChatCommand};
-use log::*;
 use std::{cell::RefCell, os::raw::c_int, slice};
+use tracing::*;
 
 pub fn initialize() {
     thread_local!(

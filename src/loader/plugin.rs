@@ -56,7 +56,7 @@ pub fn try_init() -> Result<*mut IGameComponent> {
             CEF_EXE_PATH,
             Path::new(CEF_EXE_PATH).parent().unwrap().join("cef.exe"),
         ) {
-            log::warn!("couldn't copy cef exe: {}", e);
+            tracing::warn!("couldn't copy cef exe: {}", e);
         }
 
         // add cef/cef_binary and cef/ to PATH so that cef.dll is found,
@@ -77,7 +77,7 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         // copy cef-linux-x86_64 to cef
         let new_exe_path = Path::new(CEF_EXE_PATH).parent().unwrap().join("cef");
         if let Err(e) = fs::copy(CEF_EXE_PATH, &new_exe_path) {
-            log::warn!("couldn't copy cef exe: {}", e);
+            tracing::warn!("couldn't copy cef exe: {}", e);
         }
 
         // add cef/cef_binary to LD_LIBRARY_PATH so that libcef.so is found
@@ -144,7 +144,7 @@ pub fn try_init() -> Result<*mut IGameComponent> {
     }
 
     let library = time!("dll_load", 5000, {
-        log::debug!("dll_load {}", CEF_PLUGIN_PATH);
+        tracing::debug!("dll_load {}", CEF_PLUGIN_PATH);
         dll_load(CEF_PLUGIN_PATH)?
     });
     LIBRARY.with(|cell| cell.set(Some(library)));

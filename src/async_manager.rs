@@ -3,9 +3,9 @@ use classicube_helpers::{tick::TickEventHandler, OptionWithInner};
 use futures::{future::Either, prelude::*};
 use futures_timer::Delay;
 use lazy_static::lazy_static;
-use log::debug;
 use std::{cell::RefCell, future::Future, sync::Mutex, time::Duration};
 use tokio::task::{JoinError, JoinHandle};
+use tracing::debug;
 
 thread_local!(
     static ASYNC_DISPATCHER: RefCell<Option<Dispatcher>> = Default::default();

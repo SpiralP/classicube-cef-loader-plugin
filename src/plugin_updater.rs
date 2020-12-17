@@ -3,7 +3,7 @@ use crate::{
 };
 use classicube_helpers::color;
 use futures::{prelude::*, stream};
-use log::debug;
+use tracing::debug;
 
 // windows 64 bit
 

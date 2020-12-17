@@ -1,26 +1,28 @@
 use std::sync::Once;
+use tracing_subscriber::filter::EnvFilter;
 
-#[inline]
 pub fn initialize(debug: bool, other_crates: bool) {
-    static START: Once = Once::new();
+    static ONCE: Once = Once::new();
 
-    START.call_once(move || {
-        let my_crate_name = &env!("CARGO_PKG_NAME").replace("-", "_");
-        env_logger::Builder::from_default_env()
-            .format_timestamp(None)
-            .format_module_path(false)
-            .filter(
-                if other_crates {
-                    None
-                } else {
-                    Some(my_crate_name)
-                },
-                if debug {
-                    log::LevelFilter::Debug
-                } else {
-                    log::LevelFilter::Info
-                },
-            )
+    ONCE.call_once(move || {
+        let level = if debug { "debug" } else { "info" };
+        let my_crate_name = env!("CARGO_PKG_NAME").replace("-", "_");
+
+        let mut filter = EnvFilter::from_default_env();
+
+        if other_crates {
+            filter = filter.add_directive(level.parse().unwrap());
+        } else {
+            filter = filter.add_directive(format!("{}={}", my_crate_name, level).parse().unwrap());
+        }
+
+        tracing_subscriber::fmt()
+            .with_env_filter(filter)
+            .with_target(false)
+            .with_thread_ids(false)
+            .with_thread_names(false)
+            .with_ansi(true)
+            .without_time()
             .init();
     });
 }
