@@ -389,17 +389,17 @@ async fn download(version: &str) -> Result<()> {
     Ok(())
 }
 
-#[cfg(test)]
-#[no_mangle]
-pub extern "C" fn Chat_AddOf(
-    _text: *const classicube_sys::cc_string,
-    _msg_type: ::std::os::raw::c_int,
-) {
+macro_rules! test_noop {
+    ($name:tt) => {
+        #[cfg(test)]
+        #[no_mangle]
+        pub extern "C" fn $name() {}
+    };
 }
 
-#[cfg(test)]
-#[no_mangle]
-pub extern "C" fn Chat_Add(_text: *const classicube_sys::cc_string) {}
+test_noop!(Chat_AddOf);
+test_noop!(Chat_Add);
+test_noop!(ScheduledTask_Add);
 
 #[test]
 fn test_update() {
