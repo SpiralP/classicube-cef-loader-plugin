@@ -170,7 +170,7 @@ impl GitHubReleaseChecker {
             {
                 let mut f = fs::File::create(&new_path).await?;
 
-                let mut stream = io::stream_reader(
+                let mut stream = tokio_util::io::StreamReader::new(
                     Self::make_client()
                         .get(&asset.browser_download_url)
                         .send()

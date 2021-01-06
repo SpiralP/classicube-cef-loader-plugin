@@ -1,19 +1,23 @@
 use crate::{async_manager, error::*, print_async, status};
 use classicube_helpers::color;
-use futures::stream::{StreamExt, TryStreamExt};
-use tracing::*;
+use futures::{
+    stream::{StreamExt, TryStreamExt},
+    Stream,
+};
 use std::{
     fs, io,
     io::{Read, Write},
     marker::Unpin,
     path::{Component, Path, PathBuf},
+    pin::Pin,
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
         Arc,
     },
     time::Duration,
 };
-use tokio::prelude::*;
+use tokio::io::{AsyncRead, AsyncReadExt};
+use tracing::*;
 
 macro_rules! cef_version {
     () => {
@@ -176,7 +180,7 @@ where
 
 async fn download(version: &str) -> Result<()> {
     use futures::compat::{Compat, Compat01As03};
-    use tokio_util::compat::{FuturesAsyncReadCompatExt, Tokio02AsyncReadCompatExt};
+    use tokio_util::compat::{FuturesAsyncReadCompatExt, TokioAsyncReadCompatExt};
 
     let url = format!("https://cef-builds.spotifycdn.com/{}.tar.bz2", version).replace("+", "%2B");
 
@@ -241,7 +245,7 @@ async fn download(version: &str) -> Result<()> {
         });
     }
 
-    let stream = response
+    let stream: Pin<Box<dyn Stream<Item = io::Result<_>> + Send>> = response
         .bytes_stream()
         .inspect(move |result| {
             if let Ok(bytes) = result {
@@ -249,13 +253,13 @@ async fn download(version: &str) -> Result<()> {
                 downloaded.fetch_add(len, Ordering::SeqCst);
             }
         })
+        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
         .boxed();
 
-    let stream =
-        tokio::io::stream_reader(stream.map_err(|e| io::Error::new(io::ErrorKind::Other, e)));
+    let stream = tokio_util::io::StreamReader::new(stream);
 
     let stream = tokio::io::BufReader::new(stream);
-    let stream = Tokio02AsyncReadCompatExt::compat(stream);
+    let stream = TokioAsyncReadCompatExt::compat(stream);
 
     let stream = Compat::new(stream);
     let decoder = bzip2::read::BzDecoder::new(stream);
@@ -383,4 +387,33 @@ async fn download(version: &str) -> Result<()> {
     .await;
 
     Ok(())
+}
+
+#[cfg(test)]
+#[no_mangle]
+pub extern "C" fn Chat_AddOf(
+    _text: *const classicube_sys::cc_string,
+    _msg_type: ::std::os::raw::c_int,
+) {
+}
+
+#[cfg(test)]
+#[no_mangle]
+pub extern "C" fn Chat_Add(_text: *const classicube_sys::cc_string) {}
+
+#[test]
+fn test_update() {
+    crate::logger::initialize(true, false);
+    fs::create_dir_all("cef").unwrap();
+    crate::async_manager::initialize();
+
+    async_manager::block_on_local(async {
+        async_manager::spawn(async {
+            assert_eq!(update().await.unwrap(), true);
+        })
+        .await
+        .unwrap();
+    });
+
+    fs::remove_dir_all("cef").unwrap();
 }
