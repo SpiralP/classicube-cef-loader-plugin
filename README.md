@@ -31,3 +31,6 @@ Loader plugin for [classicube-cef-plugin](https://github.com/SpiralP/classicube-
 
 - `[0607/183530.063:FATAL:tsf_text_store.cc(52)] Failed to initialize CategoryMgr.`
   - Using outdated chatsounds plugin
+
+- A dynamic link library (DLL) initialization routine failed. (os error 1114)
+  - maybe another dll like ReShade is causing weirdness
