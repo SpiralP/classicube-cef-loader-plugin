@@ -404,16 +404,18 @@ test_noop!(ScheduledTask_Add);
 #[test]
 fn test_update() {
     crate::logger::initialize(true, false);
-    fs::create_dir_all("cef").unwrap();
     crate::async_manager::initialize();
 
-    async_manager::block_on_local(async {
-        async_manager::spawn(async {
+    fs::create_dir_all("cef").unwrap();
+    crate::async_manager::block_on_local(async {
+        crate::async_manager::spawn(async {
             assert_eq!(update().await.unwrap(), true);
         })
         .await
         .unwrap();
     });
+
+    crate::async_manager::shutdown();
 
     fs::remove_dir_all("cef").unwrap();
 }
