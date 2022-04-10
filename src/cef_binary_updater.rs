@@ -182,7 +182,7 @@ async fn download(version: &str) -> Result<()> {
     use futures::compat::{Compat, Compat01As03};
     use tokio_util::compat::{FuturesAsyncReadCompatExt, TokioAsyncReadCompatExt};
 
-    let url = format!("https://cef-builds.spotifycdn.com/{}.tar.bz2", version).replace("+", "%2B");
+    let url = format!("https://cef-builds.spotifycdn.com/{}.tar.bz2", version).replace('+', "%2B");
 
     debug!("{}", url);
 
@@ -409,7 +409,7 @@ fn test_update() {
     fs::create_dir_all("cef").unwrap();
     crate::async_manager::block_on_local(async {
         crate::async_manager::spawn(async {
-            assert_eq!(update().await.unwrap(), true);
+            assert!(update().await.unwrap());
         })
         .await
         .unwrap();
