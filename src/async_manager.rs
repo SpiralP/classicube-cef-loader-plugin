@@ -1,9 +1,10 @@
+use std::{cell::RefCell, future::Future, sync::Mutex, time::Duration};
+
 use async_dispatcher::{Dispatcher, DispatcherHandle, LocalDispatcherHandle};
 use classicube_helpers::{tick::TickEventHandler, WithInner};
 use futures::{future::Either, prelude::*};
 use futures_timer::Delay;
 use lazy_static::lazy_static;
-use std::{cell::RefCell, future::Future, sync::Mutex, time::Duration};
 use tokio::task::{JoinError, JoinHandle};
 use tracing::debug;
 

@@ -1,9 +1,11 @@
 mod plugin;
 
-use crate::print;
-use classicube_sys::IGameComponent;
 use std::cell::Cell;
+
+use classicube_sys::IGameComponent;
 use tracing::{debug, error};
+
+use crate::print;
 
 thread_local!(
     static PLUGIN: Cell<Option<*mut IGameComponent>> = Cell::new(None);

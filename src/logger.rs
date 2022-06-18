@@ -1,4 +1,5 @@
 use std::sync::Once;
+
 use tracing_subscriber::filter::EnvFilter;
 
 pub fn initialize(debug: bool, other_crates: bool) {

@@ -8,10 +8,11 @@ mod logger;
 mod panic;
 mod plugin_updater;
 
+use std::{fs, os::raw::c_int, ptr};
+
 use classicube_sys::{
     Chat_Add, Chat_AddOf, IGameComponent, MsgType_MSG_TYPE_CLIENTSTATUS_2, OwnedString,
 };
-use std::{fs, os::raw::c_int, ptr};
 use tracing::*;
 
 extern "C" fn init() {

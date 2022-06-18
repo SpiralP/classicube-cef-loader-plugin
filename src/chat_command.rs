@@ -1,7 +1,9 @@
-use crate::{async_manager, plugin_updater, print, print_async};
-use classicube_sys::{cc_string, OwnedChatCommand};
 use std::{cell::RefCell, os::raw::c_int, slice};
+
+use classicube_sys::{cc_string, OwnedChatCommand};
 use tracing::*;
+
+use crate::{async_manager, plugin_updater, print, print_async};
 
 pub fn initialize() {
     thread_local!(

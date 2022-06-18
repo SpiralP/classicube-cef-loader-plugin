@@ -1,9 +1,3 @@
-use crate::{async_manager, error::*, print_async, status};
-use classicube_helpers::color;
-use futures::{
-    stream::{StreamExt, TryStreamExt},
-    Stream,
-};
 use std::{
     fs, io,
     io::{Read, Write},
@@ -16,8 +10,16 @@ use std::{
     },
     time::Duration,
 };
+
+use classicube_helpers::color;
+use futures::{
+    stream::{StreamExt, TryStreamExt},
+    Stream,
+};
 use tokio::io::{AsyncRead, AsyncReadExt};
 use tracing::*;
+
+use crate::{async_manager, error::*, print_async, status};
 
 macro_rules! cef_version {
     () => {

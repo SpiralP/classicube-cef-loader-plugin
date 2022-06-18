@@ -1,9 +1,10 @@
-use crate::{
-    cef_binary_updater, error::*, github_release_checker::GitHubReleaseChecker, print_async,
-};
 use classicube_helpers::color;
 use futures::{prelude::*, stream};
 use tracing::debug;
+
+use crate::{
+    cef_binary_updater, error::*, github_release_checker::GitHubReleaseChecker, print_async,
+};
 
 // windows 64 bit
 

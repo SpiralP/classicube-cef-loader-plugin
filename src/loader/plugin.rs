@@ -1,11 +1,13 @@
+use std::{cell::Cell, ffi::CString, fs, os::raw::c_void, path::Path};
+
+use classicube_helpers::time;
+use classicube_sys::{DynamicLib_Get2, DynamicLib_Load2, IGameComponent, OwnedString};
+
 use crate::{
     cef_binary_updater::CEF_BINARY_PATH,
     error::*,
     plugin_updater::{CEF_EXE_PATH, CEF_PLUGIN_PATH},
 };
-use classicube_helpers::time;
-use classicube_sys::{DynamicLib_Get2, DynamicLib_Load2, IGameComponent, OwnedString};
-use std::{cell::Cell, ffi::CString, fs, os::raw::c_void, path::Path};
 
 thread_local!(
     static LIBRARY: Cell<Option<*mut c_void>> = Cell::new(None);
