@@ -41,6 +41,7 @@ jobs:
           toolchain: nightly-${{ matrix.config.target }}
           target: ${{ matrix.config.target }}
           override: true
+          components: rustfmt
 
       - name: Build
         uses: actions-rs/cargo@v1
@@ -132,6 +133,7 @@ jobs:
           toolchain: nightly
           target: ${{ matrix.config.target }}
           override: true
+          components: rustfmt
 
       - name: Build
         uses: actions-rs/cargo@v1
@@ -199,6 +201,7 @@ jobs:
           toolchain: nightly
           target: ${{ matrix.config.target }}
           override: true
+          components: rustfmt
 
       - name: Build
         uses: actions-rs/cargo@v1
@@ -256,6 +259,7 @@ jobs:
           toolchain: nightly
           target: ${{ matrix.config.target }}
           override: true
+          components: rustfmt
 
       - name: Build
         uses: actions-rs/cargo@v1
