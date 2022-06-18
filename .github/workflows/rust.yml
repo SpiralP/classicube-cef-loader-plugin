@@ -34,6 +34,9 @@ jobs:
           scoop install --arch ${{ matrix.config.bits }}bit llvm
           echo "LIBCLANG_PATH=$HOME\scoop\apps\llvm\current\bin" >> $env:GITHUB_ENV
 
+      - name: setup-msbuild
+        uses: microsoft/setup-msbuild@v1
+
       - name: Install nightly ${{ matrix.config.target }}
         uses: actions-rs/toolchain@v1
         with:
