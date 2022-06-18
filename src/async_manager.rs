@@ -104,7 +104,7 @@ pub fn step() {
 }
 
 pub async fn sleep(duration: Duration) {
-    let _ = Delay::new(duration).await;
+    Delay::new(duration).await;
 }
 
 #[allow(dead_code)]
