@@ -281,7 +281,7 @@ async fn download(version: &str) -> Result<()> {
 
         for file in archive.entries()? {
             let mut file = file?;
-            let path = file.path()?.to_owned();
+            let path = file.path()?.clone();
             let mut components = path.components();
 
             // remove cef_binary_* part
@@ -312,10 +312,10 @@ async fn download(version: &str) -> Result<()> {
 
             if let Some(Component::Normal(first_part)) = trimmed_path_components.next() {
                 if first_part == "README.txt" || first_part == "LICENSE.txt" {
-                    let out_path = Path::new(CEF_BINARY_PATH_NEW).join(&first_part);
+                    let out_path = Path::new(CEF_BINARY_PATH_NEW).join(first_part);
                     debug!("{:?} {:?}", path, out_path);
 
-                    fs::create_dir_all(&out_path.parent().unwrap())?;
+                    fs::create_dir_all(out_path.parent().unwrap())?;
                     file.unpack(&out_path)?;
                     continue;
                 }
@@ -330,10 +330,10 @@ async fn download(version: &str) -> Result<()> {
                         {
                             let even_more_trimmed: PathBuf = trimmed_path_components.collect();
                             // icu .dat and .bin files must be next to cef.dll
-                            let out_path = Path::new(CEF_BINARY_PATH_NEW).join(&even_more_trimmed);
+                            let out_path = Path::new(CEF_BINARY_PATH_NEW).join(even_more_trimmed);
                             debug!("{:?} {:?}", path, out_path);
 
-                            fs::create_dir_all(&out_path.parent().unwrap())?;
+                            fs::create_dir_all(out_path.parent().unwrap())?;
                             file.unpack(&out_path)?;
 
                             if ext == "so" {

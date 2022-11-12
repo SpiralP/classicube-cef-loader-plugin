@@ -88,7 +88,7 @@ impl GitHubReleaseChecker {
             let asset_name = asset_path.file_name().unwrap().to_str().unwrap();
 
             let parent = asset_path.parent().unwrap();
-            let wanted_path = Path::new(&parent).join(&asset_name);
+            let wanted_path = Path::new(&parent).join(asset_name);
             let old_path = Path::new(&parent).join(format!("{}-old", &asset_name));
 
             if let Err(e) = fs::remove_file(&old_path).await {
@@ -166,7 +166,7 @@ impl GitHubReleaseChecker {
             .await;
 
             let parent = asset_path.parent().unwrap();
-            let wanted_path = Path::new(&parent).join(&asset_name);
+            let wanted_path = Path::new(&parent).join(asset_name);
             let new_path = Path::new(&parent).join(format!("{}-new", &asset_name));
             let old_path = Path::new(&parent).join(format!("{}-old", &asset_name));
             {

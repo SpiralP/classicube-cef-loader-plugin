@@ -78,7 +78,7 @@ pub fn try_init() -> Result<*mut IGameComponent> {
 
         // copy cef-linux-x86_64 to cef
         let new_exe_path = Path::new(CEF_EXE_PATH).parent().unwrap().join("cef");
-        if let Err(e) = fs::copy(CEF_EXE_PATH, &new_exe_path) {
+        if let Err(e) = fs::copy(CEF_EXE_PATH, new_exe_path) {
             tracing::warn!("couldn't copy cef exe: {}", e);
         }
 
