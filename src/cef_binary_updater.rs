@@ -23,7 +23,7 @@ use crate::{async_manager, error::*, print_async, status};
 
 macro_rules! cef_version {
     () => {
-        "cef_binary_87.1.11+g8bb7705+chromium-87.0.4280.66"
+        "107.1.9+g1f0a21a+chromium-107.0.5304.110"
     };
 }
 
@@ -76,7 +76,7 @@ macro_rules! cef_arch {
     };
 }
 
-pub const CEF_VERSION: &str = concat!(cef_version!(), "_", cef_arch!(), "_minimal");
+pub const CEF_VERSION: &str = concat!("cef_binary_", cef_version!(), "_", cef_arch!(), "_minimal");
 
 #[cfg(not(target_os = "macos"))]
 pub const CEF_BINARY_PATH: &str = "cef/cef_binary";
