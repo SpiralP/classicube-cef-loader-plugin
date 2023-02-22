@@ -23,7 +23,7 @@ use crate::{async_manager, error::*, print_async, status};
 
 macro_rules! cef_version {
     () => {
-        "107.1.9+g1f0a21a+chromium-107.0.5304.110"
+        "110.0.26+g732747f+chromium-110.0.5481.97"
     };
 }
 
