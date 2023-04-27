@@ -52,7 +52,7 @@
                   ]
                 );
             };
-            cargoSha256 = "sha256-uRLqheJF4oTiJhbukWnfp+xMIa+R458Ej183V2wd+Vk=";
+            cargoSha256 = "sha256-EQcmrwsrR1vOs7jn/Bea/zlT6poxTbbvNZgwFV+k064=";
             nativeBuildInputs = with pkgs; [
               pkg-config
               rustPlatform.bindgenHook
