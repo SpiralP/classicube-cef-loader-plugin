@@ -1,0 +1,28 @@
+name: CEF version check
+
+on:
+  schedule:
+    # At 12:00 on Friday
+    - cron: "0 12 * * 5"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  version_check:
+    name: version check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check version
+        run: |
+          if ! VERSION="$(npx zx .github/cef-version-check.mjs)"; then
+            if test -n "$VERSION"; then
+              echo new version $VERSION
+            fi
+            exit 1
+          fi
