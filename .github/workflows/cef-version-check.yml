@@ -2,8 +2,8 @@ name: CEF version check
 
 on:
   schedule:
-    # At 12:00 on Friday
-    - cron: "0 12 * * 5"
+    # friday at noon
+    - cron: "0 19 * * 5"
   workflow_dispatch:
 
 concurrency:

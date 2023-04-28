@@ -6,6 +6,7 @@ const versionsByOs = await (
 ).json();
 
 const mainPlatform = "windows64";
+// linux32, linux64, linuxarm, linuxarm64, macosarm64, macosx64, windows32, windows64, windowsarm64
 const requiredPlatforms = ["windows64", "linux64", "macosx64"];
 
 function getCurrentVersion() {
