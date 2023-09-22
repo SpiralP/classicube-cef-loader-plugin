@@ -1,15 +1,14 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-22.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05";
     nixpkgs-mozilla.url = "github:mozilla/nixpkgs-mozilla/master";
   };
 
   outputs = { nixpkgs, nixpkgs-mozilla, ... }:
     let
       inherit (nixpkgs) lib;
-    in
-    builtins.foldl' lib.recursiveUpdate { } (builtins.map
-      (system:
+
+      makePackage = (system: dev:
         let
           pkgs = import nixpkgs {
             inherit system;
@@ -19,61 +18,65 @@
           rustPlatform =
             let
               rust = (pkgs.rustChannelOf {
-                date = "2023-04-23";
-                channel = "nightly";
-                sha256 = "sha256-f+dMK7oRvMx2VYzqJru4ElIngARn4d2q2GkAPdlZrW0=";
+                channel = "1.72.1";
+                sha256 = "sha256-dxE7lmCFWlq0nl/wKcmYvpP9zqQbBitAQgZ1zx9Ooik=";
               }).rust.override {
-                extensions = [ "rust-src" ];
+                extensions = if dev then [ "rust-src" ] else [ ];
               };
             in
             pkgs.makeRustPlatform {
               cargo = rust;
               rustc = rust;
             };
-
-          package = rustPlatform.buildRustPackage {
-            name = "classicube-cef-loader-plugin";
-            src = lib.cleanSourceWith rec {
-              src = ./.;
-              filter = path: type:
-                lib.cleanSourceFilter path type
-                && (
-                  let
-                    baseName = builtins.baseNameOf (builtins.toString path);
-                    relPath = lib.removePrefix (builtins.toString ./.) (builtins.toString path);
-                  in
-                  lib.any (re: builtins.match re relPath != null) [
-                    "/Cargo.toml"
-                    "/Cargo.lock"
-                    "/\.cargo"
-                    "/\.cargo/.*"
-                    "/src"
-                    "/src/.*"
-                  ]
-                );
-            };
-            cargoSha256 = "sha256-EQcmrwsrR1vOs7jn/Bea/zlT6poxTbbvNZgwFV+k064=";
-            nativeBuildInputs = with pkgs; [
-              pkg-config
-              rustPlatform.bindgenHook
-            ];
-            buildInputs = with pkgs; [
-              openssl
-            ];
-
-            doCheck = false;
-          };
         in
-        rec {
-          devShells.${system}.default = package.overrideAttrs (old: {
-            nativeBuildInputs = with pkgs; old.nativeBuildInputs ++ [
-              clippy
-              rustfmt
-              rust-analyzer
-            ];
-          });
-          packages.${system}.default = package;
+        rustPlatform.buildRustPackage {
+          name = "classicube-cef-loader-plugin";
+          src = lib.cleanSourceWith rec {
+            src = ./.;
+            filter = path: type:
+              lib.cleanSourceFilter path type
+              && (
+                let
+                  baseName = builtins.baseNameOf (builtins.toString path);
+                  relPath = lib.removePrefix (builtins.toString ./.) (builtins.toString path);
+                in
+                lib.any (re: builtins.match re relPath != null) [
+                  "/Cargo.toml"
+                  "/Cargo.lock"
+                  "/\.cargo"
+                  "/\.cargo/.*"
+                  "/src"
+                  "/src/.*"
+                ]
+              );
+          };
+
+          cargoLock = {
+            lockFile = ./Cargo.lock;
+            outputHashes = {
+              "async-dispatcher-0.1.0" = "sha256-rqpQ176/PnI9vvPrwQvK3GJbryjb3hHkb+o1RyCZ3Vg=";
+              "classicube-helpers-2.0.0+classicube.1.3.6" = "sha256-yUl0B0E8P618S0662u70zUGRAG2bETVmb4G7Tbv+ZP4=";
+              "classicube-sys-3.0.0+classicube.1.3.6" = "sha256-algb9pgkJdXaswcB6m8DITzORGtOQkSgkhVvwgNXAhI=";
+            };
+          };
+
+          nativeBuildInputs = with pkgs; [
+            pkg-config
+            rustPlatform.bindgenHook
+          ];
+
+          buildInputs = with pkgs; [
+            openssl
+          ];
+
+          doCheck = false;
         }
-      )
+      );
+    in
+    builtins.foldl' lib.recursiveUpdate { } (builtins.map
+      (system: {
+        devShells.${system}.default = makePackage system true;
+        packages.${system}.default = makePackage system false;
+      })
       lib.systems.flakeExposed);
 }

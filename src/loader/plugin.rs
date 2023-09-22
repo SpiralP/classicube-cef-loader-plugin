@@ -63,7 +63,7 @@ pub fn try_init() -> Result<*mut IGameComponent> {
 
         // add cef/cef_binary and cef/ to PATH so that cef.dll is found,
         // and cef.exe can run
-        let path = env::var("PATH").unwrap();
+        let path = env::var("PATH").unwrap_or_default();
         env::set_var("PATH", format!("{};{};{}", path, CEF_BINARY_PATH, "cef"));
     }
 
@@ -93,7 +93,7 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         }
 
         // add ./cef/ to path so that we can run "cef"
-        let path = env::var("PATH").unwrap();
+        let path = env::var("PATH").unwrap_or_default();
         env::set_var("PATH", format!("{}:{}", path, "cef"));
 
         // fix linux keyboard language layout mapping
