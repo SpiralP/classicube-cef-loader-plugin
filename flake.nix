@@ -18,8 +18,8 @@
           rustPlatform =
             let
               rust = (pkgs.rustChannelOf {
-                channel = "1.72.1";
-                sha256 = "sha256-dxE7lmCFWlq0nl/wKcmYvpP9zqQbBitAQgZ1zx9Ooik=";
+                channel = "1.73.0";
+                sha256 = "sha256-rLP8+fTxnPHoR96ZJiCa/5Ans1OojI7MLsmSqR2ip8o=";
               }).rust.override {
                 extensions = if dev then [ "rust-src" ] else [ ];
               };
@@ -56,7 +56,7 @@
             outputHashes = {
               "async-dispatcher-0.1.0" = "sha256-rqpQ176/PnI9vvPrwQvK3GJbryjb3hHkb+o1RyCZ3Vg=";
               "classicube-helpers-2.0.0+classicube.1.3.6" = "sha256-yUl0B0E8P618S0662u70zUGRAG2bETVmb4G7Tbv+ZP4=";
-              "classicube-sys-3.0.0+classicube.1.3.6" = "sha256-algb9pgkJdXaswcB6m8DITzORGtOQkSgkhVvwgNXAhI=";
+              "classicube-sys-3.0.0+classicube.1.3.6" = "sha256-qz42+MfU0q1w6jtvyY5YDcMWtRVQ5ltlv/JkPcKy7t8=";
             };
           };
 
@@ -69,7 +69,10 @@
             openssl
           ];
 
-          doCheck = false;
+          checkFlags = [
+            # skip tests that require internet
+            "--skip=cef_binary_updater::test_update"
+          ];
         }
       );
     in
