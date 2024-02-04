@@ -10,15 +10,19 @@ permissions:
   contents: write
 
 jobs:
-  windows:
+  windows_x86:
     name: Build Windows ${{ matrix.config.arch }}
     runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
         config:
-          - { arch: x86_64, bits: 64, target: x86_64-pc-windows-msvc }
-          - { arch: i686, bits: 32, target: i686-pc-windows-msvc }
+          - arch: x86_64
+            bits: 64
+            target: x86_64-pc-windows-msvc
+          - arch: i686
+            bits: 32
+            target: i686-pc-windows-msvc
 
     steps:
       - uses: actions/checkout@v2
@@ -37,11 +41,11 @@ jobs:
       - name: setup-msbuild
         uses: microsoft/setup-msbuild@v1
 
-      - name: Install nightly ${{ matrix.config.target }}
+      - name: Install rust ${{ matrix.config.target }}
         uses: actions-rs/toolchain@v1
         with:
           # we have to use this toolchain because "libclang.dll: invalid DLL (32-bit)"
-          toolchain: nightly-${{ matrix.config.target }}
+          toolchain: stable-${{ matrix.config.target }}
           target: ${{ matrix.config.target }}
           override: true
           components: rustfmt
@@ -105,7 +109,10 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { arch: x86_64, target: x86_64-unknown-linux-gnu }
+          - arch: x86_64
+            target: x86_64-unknown-linux-gnu
+          - arch: i686
+            target: i686-unknown-linux-gnu
 
     steps:
       - uses: actions/checkout@v2
@@ -118,10 +125,21 @@ jobs:
             libssl-dev libglib2.0-dev libpango1.0-dev libatk1.0-dev libgtk-3-dev libgdk-pixbuf2.0-dev \
             libnss3 libasound2 libxss1 libnspr4
 
-      - name: Install nightly ${{ matrix.config.target }}
+      - name: Install i686 deps
+        if: matrix.config.arch == 'i686'
+        run: |
+          sudo dpkg --add-architecture i386 \
+          && sudo apt-get -y update \
+          && sudo apt-get -y install git gcc g++ build-essential cmake clang pkg-config:i386 \
+            gcc-multilib g++-multilib \
+            libssl-dev:i386 libglib2.0-dev:i386 libpango1.0-dev:i386 libatk1.0-dev:i386 libgtk-3-dev:i386 libgdk-pixbuf2.0-dev:i386 \
+            libssl3:i386 libnss3:i386 libasound2:i386 libxss1:i386 libnspr4:i386 \
+          && echo "PKG_CONFIG_ALLOW_CROSS=1" >> "$GITHUB_ENV"
+
+      - name: Install rust ${{ matrix.config.target }}
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           target: ${{ matrix.config.target }}
           override: true
           components: rustfmt
@@ -163,6 +181,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  linux_nix:
+    name: Nix Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: cachix/install-nix-action@v22
+      - run: nix build --print-build-logs .
+      - uses: actions/upload-artifact@v3
+        with:
+          name: nix result
+          path: |
+            result/lib/
+
   linux_arm:
     name: Build Linux ${{ matrix.config.arch }}
     runs-on: ubuntu-latest
@@ -170,8 +201,10 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { arch: armhf, target: armv7-unknown-linux-gnueabihf }
-          - { arch: aarch64, target: aarch64-unknown-linux-gnu }
+          - arch: armhf
+            target: armv7-unknown-linux-gnueabihf
+          - arch: aarch64
+            target: aarch64-unknown-linux-gnu
 
     steps:
       - uses: actions/checkout@v2
@@ -186,10 +219,10 @@ jobs:
         run: |
           docker build -t cross-aarch64 -f .github/cross-aarch64.Dockerfile .
 
-      - name: Install nightly ${{ matrix.config.target }}
+      - name: Install rust ${{ matrix.config.target }}
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           target: ${{ matrix.config.target }}
           override: true
           components: rustfmt
@@ -226,14 +259,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  mac:
+  mac_x86:
     name: Build MacOS ${{ matrix.config.arch }}
     runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
         config:
-          - { arch: x86_64, bits: 64, target: x86_64-apple-darwin }
+          - arch: x86_64
+            target: x86_64-apple-darwin
           # cef-binary doesn't have 32 bit download
           # - { arch: i686, bits: 32 }
 
@@ -244,10 +278,10 @@ jobs:
         run: |
           brew install cmake
 
-      - name: Install nightly ${{ matrix.config.target }}
+      - name: Install rust ${{ matrix.config.target }}
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           target: ${{ matrix.config.target }}
           override: true
           components: rustfmt
