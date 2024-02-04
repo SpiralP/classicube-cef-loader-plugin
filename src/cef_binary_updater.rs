@@ -21,9 +21,19 @@ use tracing::*;
 
 use crate::{async_manager, error::*, print_async, status};
 
+#[cfg(not(all(target_os = "linux", target_arch = "x86")))]
 macro_rules! cef_version {
     () => {
-        "117.2.5+gda4c36a+chromium-117.0.5938.152"
+        "121.3.4+g2af7b91+chromium-121.0.6167.139"
+    };
+}
+
+// Linux x86 32-bit builds are discontinued after version 101 (details)
+// https://cef-builds.spotifycdn.com/index.html#linux32
+#[cfg(all(target_os = "linux", target_arch = "x86"))]
+macro_rules! cef_version {
+    () => {
+        "101.0.18+g367b4a0+chromium-101.0.4951.67"
     };
 }
 
