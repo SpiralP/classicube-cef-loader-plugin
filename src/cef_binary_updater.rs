@@ -404,6 +404,7 @@ test_noop!(Chat_Add);
 test_noop!(ScheduledTask_Add);
 
 #[test]
+#[ignore]
 fn test_update() {
     crate::logger::initialize(true, false);
     crate::async_manager::initialize();

@@ -68,11 +68,6 @@
           buildInputs = with pkgs; [
             openssl
           ];
-
-          checkFlags = [
-            # skip tests that require internet
-            "--skip=cef_binary_updater::test_update"
-          ];
         }
       );
     in
