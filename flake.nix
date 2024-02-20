@@ -62,7 +62,12 @@
           nativeBuildInputs = with pkgs; [
             pkg-config
             rustPlatform.bindgenHook
-          ];
+          ] ++ (if dev then
+            with pkgs; [
+              clippy
+              rustfmt
+              rust-analyzer
+            ] else [ ]);
 
           buildInputs = with pkgs; [
             openssl
