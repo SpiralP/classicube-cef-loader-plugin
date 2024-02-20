@@ -55,7 +55,7 @@
             lockFile = ./Cargo.lock;
             outputHashes = {
               "async-dispatcher-0.1.0" = "sha256-rqpQ176/PnI9vvPrwQvK3GJbryjb3hHkb+o1RyCZ3Vg=";
-              "classicube-helpers-2.0.0+classicube.1.3.6" = "sha256-YvXgatSnaM9YJhk0Sx9dVzn0pl6tOUPrm394aj8qk1o=";
+              "classicube-helpers-2.0.0+classicube.1.3.6" = "sha256-V5PBZR0rj42crA1fGUjMk4rDh0ZpjjNcbMCe6bgotW8=";
             };
           };
 
