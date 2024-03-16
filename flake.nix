@@ -13,16 +13,15 @@
             inherit system;
           };
         in
-        rec {
+        {
           default = pkgs.rustPlatform.buildRustPackage {
             name = "classicube-cef-loader-plugin";
-            src = lib.cleanSourceWith rec {
+            src = lib.cleanSourceWith {
               src = ./.;
               filter = path: type:
                 lib.cleanSourceFilter path type
                 && (
                   let
-                    baseName = builtins.baseNameOf (builtins.toString path);
                     relPath = lib.removePrefix (builtins.toString ./.) (builtins.toString path);
                   in
                   lib.any (re: builtins.match re relPath != null) [
