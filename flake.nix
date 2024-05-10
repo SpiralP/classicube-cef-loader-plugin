@@ -12,28 +12,18 @@
           pkgs = import nixpkgs {
             inherit system;
           };
+          inherit (lib.importTOML ./Cargo.toml) package;
         in
         {
           default = pkgs.rustPlatform.buildRustPackage {
-            name = "classicube-cef-loader-plugin";
-            src = lib.cleanSourceWith {
-              src = ./.;
-              filter = path: type:
-                lib.cleanSourceFilter path type
-                && (
-                  let
-                    relPath = lib.removePrefix (builtins.toString ./.) (builtins.toString path);
-                  in
-                  lib.any (re: builtins.match re relPath != null) [
-                    "/Cargo.toml"
-                    "/Cargo.lock"
-                    "/\.cargo"
-                    "/\.cargo/.*"
-                    "/src"
-                    "/src/.*"
-                  ]
-                );
-            };
+            pname = package.name;
+            version = package.version;
+
+            src = lib.sourceByRegex ./. [
+              "^\.cargo(/.*)?$"
+              "^Cargo\.(lock|toml)$"
+              "^src(/.*)?$"
+            ];
 
             cargoLock = {
               lockFile = ./Cargo.lock;
