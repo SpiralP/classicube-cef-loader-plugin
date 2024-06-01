@@ -14,7 +14,7 @@
           };
           inherit (lib.importTOML ./Cargo.toml) package;
         in
-        {
+        rec   {
           default = pkgs.rustPlatform.buildRustPackage {
             pname = package.name;
             version = package.version;
@@ -53,8 +53,6 @@
             name = "update-cef-version";
             runtimeInputs = with pkgs; [
               coreutils
-              sd
-              ripgrep
               zx
             ];
             text = ''
@@ -65,15 +63,37 @@
 
                 echo "new CEF version: $NEW_VERSION"
 
-                REGEX='\d+\.\d+\.\d+\+\w+\+chromium-\d+\.\d+\.\d+\.\d+'
-                OLD_VERSION="$(rg -o "$REGEX" src/cef_binary_updater.rs | head -n1)"
+                ${lib.getExe replace-cef-version} "$NEW_VERSION"
+              fi
+            '';
+          };
 
-                echo "$OLD_VERSION" "$NEW_VERSION"
-                test -z "$OLD_VERSION" && exit 1
-                test -z "$NEW_VERSION" && exit 1
-                test "$OLD_VERSION" = "$NEW_VERSION" && exit 0
+          replace-cef-version = pkgs.writeShellApplication {
+            name = "replace-cef-version";
+            runtimeInputs = with pkgs; [
+              coreutils
+              sd
+              ripgrep
+            ];
+            text = ''
+              NEW_VERSION="$1"
 
-                sd --fixed-strings "$OLD_VERSION" "$NEW_VERSION" src/cef_binary_updater.rs
+              REGEX='\d+\.\d+\.\d+\+\w+\+chromium-\d+\.\d+\.\d+\.\d+'
+              OLD_VERSION="$(rg -o "$REGEX" src/cef_binary_updater.rs | head -n1)"
+
+              echo "$OLD_VERSION" "$NEW_VERSION"
+              test -z "$OLD_VERSION" && exit 1
+              test -z "$NEW_VERSION" && exit 1
+              test "$OLD_VERSION" = "$NEW_VERSION" && exit 0
+
+              if ! grep -q "$OLD_VERSION" src/cef_binary_updater.rs; then
+                echo "couldn't find old version in src/cef_binary_updater.rs"
+                exit 1
+              fi
+              sd --fixed-strings "$OLD_VERSION" "$NEW_VERSION" src/cef_binary_updater.rs
+              if ! grep -q "$NEW_VERSION" src/cef_binary_updater.rs; then
+                echo "couldn't find new version in src/cef_binary_updater.rs"
+                exit 1
               fi
             '';
           };
