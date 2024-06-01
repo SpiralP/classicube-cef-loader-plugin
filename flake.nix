@@ -48,6 +48,34 @@
               openssl
             ];
           };
+
+          update-cef-version = pkgs.writeShellApplication {
+            name = "update-cef-version";
+            runtimeInputs = with pkgs; [
+              coreutils
+              sd
+              ripgrep
+              zx
+            ];
+            text = ''
+              if ! NEW_VERSION="$(zx .github/check-cef-version.mjs)"; then
+                if test -n "$NEW_VERSION"; then
+                  echo "new CEF version: $NEW_VERSION"
+
+                  REGEX='\d+\.\d+\.\d+\+\w+\+chromium-\d+\.\d+\.\d+\.\d+'
+                  OLD_VERSION="$(rg -o "$REGEX" src/cef_binary_updater.rs | head -n1)"
+
+                  echo "$OLD_VERSION" "$NEW_VERSION"
+                  test -z "$OLD_VERSION" && exit 1
+                  test -z "$NEW_VERSION" && exit 1
+                  test "$OLD_VERSION" = "$NEW_VERSION" && exit 0
+
+                  sd --fixed-strings "$OLD_VERSION" "$NEW_VERSION" src/cef_binary_updater.rs
+                fi
+                exit 1
+              fi
+            '';
+          };
         }
       );
     in
