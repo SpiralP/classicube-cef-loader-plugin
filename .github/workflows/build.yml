@@ -1,0 +1,16 @@
+name: Build
+
+on:
+  pull_request:
+    branches: [master, main]
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: SpiralP/github-reusable-workflows/.github/workflows/build.yml@main
