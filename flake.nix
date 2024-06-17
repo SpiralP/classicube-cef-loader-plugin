@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
   };
 
   outputs = { nixpkgs, ... }:
@@ -12,12 +12,12 @@
           pkgs = import nixpkgs {
             inherit system;
           };
-          inherit (lib.importTOML ./Cargo.toml) package;
+          rustManifest = lib.importTOML ./Cargo.toml;
         in
-        rec   {
+        rec {
           default = pkgs.rustPlatform.buildRustPackage {
-            pname = package.name;
-            version = package.version;
+            pname = rustManifest.package.name;
+            version = rustManifest.package.version;
 
             src = lib.sourceByRegex ./. [
               "^\.cargo(/.*)?$"
