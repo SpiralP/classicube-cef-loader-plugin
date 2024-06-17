@@ -1,4 +1,5 @@
 use error_chain::error_chain;
+#[allow(unused_imports)]
 pub use error_chain::{bail, ensure};
 
 error_chain! {
