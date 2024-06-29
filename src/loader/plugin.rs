@@ -89,7 +89,7 @@ pub fn try_init() -> Result<*mut IGameComponent> {
                 format!("{}:{}", ld_library_path, CEF_BINARY_PATH),
             );
         } else {
-            env::set_var("LD_LIBRARY_PATH", format!("{}/", CEF_BINARY_PATH));
+            env::set_var("LD_LIBRARY_PATH", CEF_BINARY_PATH);
         }
 
         // add ./cef/ to path so that we can run "cef"
@@ -103,7 +103,7 @@ pub fn try_init() -> Result<*mut IGameComponent> {
 
     #[cfg(target_os = "macos")]
     {
-        use std::{io::Write, os::unix::fs::PermissionsExt};
+        use std::{env, io::Write, os::unix::fs::PermissionsExt};
 
         // make it executable
         let mut perms = fs::metadata(CEF_EXE_PATH)?.permissions();
@@ -142,6 +142,21 @@ pub fn try_init() -> Result<*mut IGameComponent> {
                     .replace("APP_NAME", app_name)
                     .replace("APP_IDENTIFIER", app_identifier)
             )?;
+        }
+
+        // add "cef/Chromium Embedded Framework.framework/Libraries" to DYLD_LIBRARY_PATH
+        // so that libGLESv2.dylib/libEGL.dylib/libvk_swiftshader.dylib are found
+        // ERROR:gl_implementation.cc(501)] Failed to load /cc/cef/cef.app/Contents/MacOS/libGLESv2.dylib:
+        // dlopen(/cc/cef/cef.app/Contents/MacOS/libGLESv2.dylib, 0x0001):
+        // tried: '/cc/cef/cef.app/Contents/MacOS/libGLESv2.dylib' (no such file)
+        let libraries_path = format!("{}/Libraries", CEF_BINARY_PATH);
+        if let Ok(dyld_library_path) = env::var("DYLD_LIBRARY_PATH") {
+            env::set_var(
+                "DYLD_LIBRARY_PATH",
+                format!("{}:{}", dyld_library_path, libraries_path),
+            );
+        } else {
+            env::set_var("DYLD_LIBRARY_PATH", format!("{}", libraries_path));
         }
     }
 
