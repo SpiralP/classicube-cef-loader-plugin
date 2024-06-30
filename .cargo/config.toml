@@ -1,14 +1,13 @@
+# use static c runtime so we can support older windows versions
 [target.x86_64-pc-windows-msvc]
-rustflags = [
-  "-C", "target-feature=+crt-static",
-]
+rustflags = ["-C", "target-feature=+crt-static"]
 
 [target.i686-pc-windows-msvc]
-rustflags = [
-  "-C", "target-feature=+crt-static",
-]
+rustflags = ["-C", "target-feature=+crt-static"]
 
+# tell mac to use symbols already loaded (from ClassiCube)
 [target.x86_64-apple-darwin]
-rustflags = [
-  "-C", "link-args=-undefined dynamic_lookup",
-]
+rustflags = ["-C", "link-args=-undefined dynamic_lookup"]
+
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-args=-undefined dynamic_lookup"]
