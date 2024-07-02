@@ -51,8 +51,8 @@ extern "C" fn init() {
                     break;
                 }
 
-                // check again every 2 hours
-                async_manager::sleep(std::time::Duration::from_secs(2 * 60 * 60)).await;
+                // check again every 4 hours
+                async_manager::sleep(std::time::Duration::from_secs(4 * 60 * 60)).await;
                 debug!("auto-checking for updates again");
             }
         });
