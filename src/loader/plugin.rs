@@ -50,15 +50,12 @@ fn dll_get(library: *mut c_void, symbol_name: &str) -> Result<*mut c_void> {
 pub fn try_init() -> Result<*mut IGameComponent> {
     #[cfg(target_os = "windows")]
     {
-        use std::env;
-
         // copy cef-windows-x86_64.exe to cef.exe
-        if let Err(e) = fs::copy(
+        fs::copy(
             CEF_EXE_PATH,
             Path::new(CEF_EXE_PATH).parent().unwrap().join("cef.exe"),
-        ) {
-            tracing::warn!("couldn't copy cef exe: {}", e);
-        }
+        )
+        .context("couldn't copy cef exe")?;
 
         // add cef/cef_binary and cef/ to PATH so that cef.dll is found,
         // and cef.exe can run
@@ -71,15 +68,15 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         use std::os::unix::fs::PermissionsExt;
 
         // make it executable
-        let mut perms = fs::metadata(CEF_EXE_PATH)?.permissions();
+        let mut perms = fs::metadata(CEF_EXE_PATH)
+            .with_context(|| format!("{CEF_EXE_PATH} not found?"))?
+            .permissions();
         perms.set_mode(0o755);
         fs::set_permissions(CEF_EXE_PATH, perms)?;
 
         // copy cef-linux-x86_64 to cef
         let new_exe_path = Path::new(CEF_EXE_PATH).parent().unwrap().join("cef");
-        if let Err(e) = fs::copy(CEF_EXE_PATH, new_exe_path) {
-            tracing::warn!("couldn't copy cef exe: {}", e);
-        }
+        fs::copy(CEF_EXE_PATH, new_exe_path).context("couldn't copy cef exe")?;
 
         // add cef/cef_binary to LD_LIBRARY_PATH so that libcef.so is found
         if let Ok(ld_library_path) = env::var("LD_LIBRARY_PATH") {
@@ -115,7 +112,7 @@ pub fn try_init() -> Result<*mut IGameComponent> {
             .map(|m| m.is_file())
             .unwrap_or(false)
         {
-            return Err("cef-binary missing".into());
+            bail!("cef-binary missing");
         }
 
         // cef, cef (GPU), cef (Plugin), cef (Renderer)
@@ -131,7 +128,8 @@ pub fn try_init() -> Result<*mut IGameComponent> {
             fs::copy(
                 CEF_EXE_PATH,
                 format!("./cef/{}.app/Contents/MacOS/{}", app_name, app_name),
-            )?;
+            )
+            .context("couldn't copy cef exe")?;
 
             let mut f = fs::File::create(format!("./cef/{}.app/Contents/Info.plist", app_name))?;
             write!(
@@ -166,16 +164,14 @@ pub fn try_init() -> Result<*mut IGameComponent> {
     LIBRARY.with(|cell| cell.set(Some(library)));
 
     let plugin_component = dll_get(library, "Plugin_Component")?;
-    let plugin_component: *mut IGameComponent = plugin_component as _;
+    let plugin_component = plugin_component as *mut IGameComponent;
 
     Ok(plugin_component)
 }
 
 pub fn free() {
     LIBRARY.with(|cell| {
-        if let Some(_library) = cell.get() {
-            cell.set(None);
-        }
+        let _ = cell.take();
     });
 }
 
