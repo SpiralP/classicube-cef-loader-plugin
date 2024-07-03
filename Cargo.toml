@@ -1,7 +1,6 @@
 [package]
 name = "classicube-cef-loader-plugin"
 version = "1.4.0"
-authors = ["SpiralP <spiral.palmer@gmail.com>"]
 edition = "2021"
 publish = false
 
@@ -9,12 +8,12 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
+anyhow = "1"
 async-dispatcher = { git = "https://github.com/SpiralP/rust-async-dispatcher.git" }
 backtrace = "0.3"
 bzip2 = { version = "0.4", features = ["tokio"] }
 classicube-helpers = { git = "https://github.com/SpiralP/rust-classicube-helpers.git" }
 classicube-sys = "3"
-error-chain = "0.12"
 futures = { version = "0.3", features = ["compat", "io-compat"] }
 futures-timer = "3"
 lazy_static = "1"

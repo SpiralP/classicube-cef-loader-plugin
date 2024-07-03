@@ -1,7 +1,6 @@
 mod async_manager;
 mod cef_binary_updater;
 mod chat_command;
-mod error;
 mod github_release_checker;
 mod loader;
 mod logger;

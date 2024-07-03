@@ -1,3 +1,4 @@
+use anyhow::{bail, Error, Result};
 use std::{
     fs, io,
     io::{Read, Write},
@@ -19,7 +20,7 @@ use futures::{
 use tokio::io::{AsyncRead, AsyncReadExt};
 use tracing::*;
 
-use crate::{async_manager, error::*, print_async, status};
+use crate::{async_manager, print_async, status};
 
 #[cfg(not(all(target_os = "linux", target_arch = "x86")))]
 macro_rules! cef_version {

@@ -1,13 +1,12 @@
-use std::{cell::Cell, ffi::CString, fs, os::raw::c_void, path::Path};
-
-use classicube_helpers::time;
-use classicube_sys::{DynamicLib_Get2, DynamicLib_Load2, IGameComponent, OwnedString};
+use std::{cell::Cell, env, ffi::CString, fs, os::raw::c_void, path::Path};
 
 use crate::{
     cef_binary_updater::CEF_BINARY_PATH,
-    error::*,
     plugin_updater::{CEF_EXE_PATH, CEF_PLUGIN_PATH},
 };
+use anyhow::{bail, Context, Result};
+use classicube_helpers::time;
+use classicube_sys::{DynamicLib_Get2, DynamicLib_Load2, IGameComponent, OwnedString};
 
 thread_local!(
     static LIBRARY: Cell<Option<*mut c_void>> = Cell::new(None);
@@ -31,7 +30,7 @@ fn dll_load(path: &str) -> Result<*mut c_void> {
 
     let ptr = unsafe { DynamicLib_Load2(path.as_cc_string()) };
     if ptr.is_null() {
-        return Err(get_error().into());
+        bail!(get_error());
     }
 
     Ok(ptr)
@@ -42,7 +41,7 @@ fn dll_get(library: *mut c_void, symbol_name: &str) -> Result<*mut c_void> {
 
     let ptr = unsafe { DynamicLib_Get2(library, symbol_name.as_ptr()) };
     if ptr.is_null() {
-        return Err(get_error().into());
+        bail!(get_error());
     }
 
     Ok(ptr)
@@ -69,7 +68,7 @@ pub fn try_init() -> Result<*mut IGameComponent> {
 
     #[cfg(target_os = "linux")]
     {
-        use std::{env, os::unix::fs::PermissionsExt};
+        use std::os::unix::fs::PermissionsExt;
 
         // make it executable
         let mut perms = fs::metadata(CEF_EXE_PATH)?.permissions();
@@ -103,7 +102,7 @@ pub fn try_init() -> Result<*mut IGameComponent> {
 
     #[cfg(target_os = "macos")]
     {
-        use std::{env, io::Write, os::unix::fs::PermissionsExt};
+        use std::{io::Write, os::unix::fs::PermissionsExt};
 
         // make it executable
         let mut perms = fs::metadata(CEF_EXE_PATH)?.permissions();
