@@ -75,17 +75,26 @@ jobs:
             classicube_cef_loader_windows_${{ matrix.config.arch }}.dll
 
       - name: Generate Release Body Text
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.config.arch == 'x86_64' }}
         run: |
           node .github\format-release.js '${{ steps.virustotal.outputs.analysis }}' > release_body_text.txt
 
       - name: Upload Release
         uses: softprops/action-gh-release@v2
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.config.arch == 'x86_64' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           body_path: release_body_text.txt
+          files: |
+            classicube_cef_loader_windows_${{ matrix.config.arch }}.dll
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v2
+        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.config.arch != 'x86_64' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
           files: |
             classicube_cef_loader_windows_${{ matrix.config.arch }}.dll
 
