@@ -105,7 +105,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install x86_64 deps
-        if: matrix.config.arch == 'x86_64'
+        if: ${{ matrix.config.arch == 'x86_64' }}
         run: |
           sudo apt-get -y update
           sudo apt-get -y install git gcc g++ build-essential cmake clang pkg-config \
@@ -113,7 +113,7 @@ jobs:
             libssl3 libnss3 libasound2 libxss1 libnspr4
 
       - name: Install i686 deps
-        if: matrix.config.arch == 'i686'
+        if: ${{ matrix.config.arch == 'i686' }}
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get -y update
@@ -151,7 +151,6 @@ jobs:
         run: |
           mv 'target/${{ matrix.config.target }}/release/libclassicube_cef_loader_plugin.so' \
             './classicube_cef_loader_linux_${{ matrix.config.arch }}.so'
-          file './classicube_cef_loader_linux_${{ matrix.config.arch }}.so'
 
       - name: Upload Release
         uses: softprops/action-gh-release@v2
@@ -180,12 +179,12 @@ jobs:
       - name: Install armhf deps
         if: ${{ matrix.config.arch == 'armhf' }}
         run: |
-          docker build -t cross-armhf -f .github/cross-armhf.Dockerfile .
+          docker build --pull -t cross-armhf -f .github/cross-armhf.Dockerfile .
 
       - name: Install aarch64 deps
         if: ${{ matrix.config.arch == 'aarch64' }}
         run: |
-          docker build -t cross-aarch64 -f .github/cross-aarch64.Dockerfile .
+          docker build --pull -t cross-aarch64 -f .github/cross-aarch64.Dockerfile .
 
       - name: Install rust
         run: |
@@ -219,16 +218,15 @@ jobs:
         run: |
           mv 'target/${{ matrix.config.target }}/release/libclassicube_cef_loader_plugin.so' \
             './classicube_cef_loader_linux_${{ matrix.config.arch }}.so'
-          file './classicube_cef_loader_linux_${{ matrix.config.arch }}.so'
 
       - name: Upload Release
         uses: softprops/action-gh-release@v2
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
             classicube_cef_loader_linux_${{ matrix.config.arch }}.so
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   mac_x86:
     name: Build MacOS ${{ matrix.config.arch }}
@@ -239,8 +237,6 @@ jobs:
         config:
           - arch: x86_64
             target: x86_64-apple-darwin
-          # cef-binary doesn't have 32 bit download
-          # - { arch: i686, bits: 32 }
 
     steps:
       - uses: actions/checkout@v4
@@ -259,7 +255,7 @@ jobs:
         if: ${{ startsWith(github.ref, 'refs/tags/') != true }}
         run: |
           cargo build --target ${{ matrix.config.target }}
-          file 'target/${{ matrix.config.target }}/debug/libclassicube_cef_loader_plugin.so'
+          file 'target/${{ matrix.config.target }}/debug/libclassicube_cef_loader_plugin.dylib'
 
       - name: Test
         if: ${{ startsWith(github.ref, 'refs/tags/') != true }}
@@ -270,14 +266,13 @@ jobs:
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         run: |
           cargo build --target ${{ matrix.config.target }} --release
-          file 'target/${{ matrix.config.target }}/release/libclassicube_cef_loader_plugin.so'
+          file 'target/${{ matrix.config.target }}/release/libclassicube_cef_loader_plugin.dylib'
 
       - name: Rename files
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         run: |
           mv 'target/${{ matrix.config.target }}/release/libclassicube_cef_loader_plugin.dylib' \
             'classicube_cef_loader_macos_${{ matrix.config.arch }}.dylib'
-          file 'classicube_cef_loader_macos_${{ matrix.config.arch }}.dylib'
 
       - name: Upload Release
         uses: softprops/action-gh-release@v2

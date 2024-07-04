@@ -21,6 +21,7 @@
 
             src = lib.sourceByRegex ./. [
               "^\.cargo(/.*)?$"
+              "^build\.rs$"
               "^Cargo\.(lock|toml)$"
               "^src(/.*)?$"
             ];
@@ -105,5 +106,12 @@
         devShells.${system} = makePackages system true;
         packages.${system} = makePackages system false;
       })
-      lib.systems.flakeExposed);
+      [
+        "x86_64-linux"
+        "aarch64-linux"
+        # cef "Linux ARM" is armv7
+        "armv7l-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ]);
 }
