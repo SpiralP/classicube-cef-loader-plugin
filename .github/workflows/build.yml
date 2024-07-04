@@ -241,10 +241,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install deps
-        run: |
-          brew install cmake
-
       - name: Install rust
         run: |
           rustup default stable
