@@ -232,9 +232,9 @@ dependencies = [
 
 [[package]]
 name = "classicube-sys"
-version = "3.0.3+classicube.1.3.6"
+version = "3.0.4+classicube.1.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7dbadac986810f7b5ff002fb20af9cf5fb15378b9bfc8e7ac3dde752bfe4d70b"
+checksum = "1c8e4bd399a4f578e48e1710b4286caac27dc794773de50d030e432eb0c16b2d"
 dependencies = [
  "bindgen",
  "cc",
