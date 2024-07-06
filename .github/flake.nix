@@ -29,6 +29,8 @@
               if test "$LATEST_VERSION" != "$CURRENT_VERSION"; then
                 echo "new CEF version: $LATEST_VERSION"
                 ${lib.getExe replace-cef-version} "$LATEST_VERSION"
+              else
+                echo "already at latest version: $LATEST_VERSION"
               fi
             '';
           };
