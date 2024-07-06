@@ -20,9 +20,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
       - uses: DeterminateSystems/magic-nix-cache-action@main
-      - run: |
+      - id: update_cef_version
+        run: |
           nix run .github#update-cef-version \
             --print-build-logs --no-write-lock-file --recreate-lock-file
+          CEF_BINARY_VERSION="$(nix run .github#get-latest-cef-version \
+            --print-build-logs --no-write-lock-file --recreate-lock-file)"
+          echo "cef_binary_version=$CEF_BINARY_VERSION" >> "$GITHUB_OUTPUT"
       - run: git diff && git add -v .
       - run: |
           nix build .#default \
@@ -30,10 +34,7 @@ jobs:
       - run: git status && git diff --cached
       - uses: peter-evans/create-pull-request@v6
         with:
-          branch: update-cef-version
-          title: Update CEF version
+          branch: bump-cef-binary
+          title: Bump cef_binary to `${{ steps.update_cef_version.outputs.cef_binary_version }}`
           body: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          commit-message: |
-            Update CEF version
-
-            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          commit-message: Bump cef_binary to `${{ steps.update_cef_version.outputs.cef_binary_version }}`
