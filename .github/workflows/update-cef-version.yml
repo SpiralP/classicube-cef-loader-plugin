@@ -21,11 +21,11 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@main
       - uses: DeterminateSystems/magic-nix-cache-action@main
       - run: |
-          nix run .#update-cef-version \
+          nix run .github#update-cef-version \
             --print-build-logs --no-write-lock-file --recreate-lock-file
       - run: git diff && git add -v .
       - run: |
-          nix build '.#default' \
+          nix build .#default \
             --print-build-logs --no-update-lock-file
       - run: git status && git diff --cached
       - uses: peter-evans/create-pull-request@v6

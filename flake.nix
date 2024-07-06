@@ -14,7 +14,7 @@
           };
           rustManifest = lib.importTOML ./Cargo.toml;
         in
-        rec {
+        {
           default = pkgs.rustPlatform.buildRustPackage {
             pname = rustManifest.package.name;
             version = rustManifest.package.version;
@@ -48,55 +48,6 @@
             buildInputs = with pkgs; [
               openssl
             ];
-          };
-
-          update-cef-version = pkgs.writeShellApplication {
-            name = "update-cef-version";
-            runtimeInputs = with pkgs; [
-              coreutils
-              zx
-            ];
-            text = ''
-              if ! NEW_VERSION="$(zx .github/check-cef-version.mjs)"; then
-                if test -z "$NEW_VERSION"; then
-                  exit 1
-                fi
-
-                echo "new CEF version: $NEW_VERSION"
-
-                ${lib.getExe replace-cef-version} "$NEW_VERSION"
-              fi
-            '';
-          };
-
-          replace-cef-version = pkgs.writeShellApplication {
-            name = "replace-cef-version";
-            runtimeInputs = with pkgs; [
-              coreutils
-              sd
-              ripgrep
-            ];
-            text = ''
-              NEW_VERSION="$1"
-
-              REGEX='\d+\.\d+\.\d+\+\w+\+chromium-\d+\.\d+\.\d+\.\d+'
-              OLD_VERSION="$(rg -o "$REGEX" src/cef_binary_updater.rs | head -n1)"
-
-              echo "$OLD_VERSION" "$NEW_VERSION"
-              test -z "$OLD_VERSION" && exit 1
-              test -z "$NEW_VERSION" && exit 1
-              test "$OLD_VERSION" = "$NEW_VERSION" && exit 0
-
-              if ! grep -q "$OLD_VERSION" src/cef_binary_updater.rs; then
-                echo "couldn't find old version in src/cef_binary_updater.rs"
-                exit 1
-              fi
-              sd --fixed-strings "$OLD_VERSION" "$NEW_VERSION" src/cef_binary_updater.rs
-              if ! grep -q "$NEW_VERSION" src/cef_binary_updater.rs; then
-                echo "couldn't find new version in src/cef_binary_updater.rs"
-                exit 1
-              fi
-            '';
           };
         }
       );

@@ -9,18 +9,6 @@ const mainPlatform = "windows64";
 // linux32, linux64, linuxarm, linuxarm64, macosarm64, macosx64, windows32, windows64, windowsarm64
 const requiredPlatforms = ["windows64", "linux64", "macosx64"];
 
-function getCurrentVersion() {
-  const content = fs
-    .readFileSync(path.join(__dirname, "../src/cef_binary_updater.rs"))
-    .toString();
-  const match = content.match(/macro_rules! cef_version.+?"(.+?)"/s);
-  if (match) {
-    return match[1];
-  }
-
-  return null;
-}
-
 function getLatestStableVersion() {
   for (const version of versionsByOs[mainPlatform].versions) {
     const { cef_version, channel } = version;
@@ -32,7 +20,7 @@ function getLatestStableVersion() {
       version.files.some(({ name }) => name.includes("_beta"))
     ) {
       ok = false;
-      console.warn("skipping beta version", { version });
+      console.warn("skipping beta version", cef_version);
     }
     for (const platform of requiredPlatforms) {
       if (
@@ -56,27 +44,14 @@ function getLatestStableVersion() {
 }
 
 function main() {
-  const currentVersion = getCurrentVersion();
-  if (!currentVersion) {
-    console.warn("!currentVersion");
-    process.exit(1);
-    return;
-  }
-
   const latestVersion = getLatestStableVersion();
   if (!latestVersion) {
     console.warn("!latestVersion");
     process.exit(1);
     return;
   }
-
-  const ok = currentVersion === latestVersion.cef_version;
-  if (!ok) {
-    console.log(latestVersion.cef_version);
-    process.exit(1);
-  } else {
-    process.exit(0);
-  }
+  console.log(latestVersion.cef_version);
+  process.exit(0);
 }
 
 main();
