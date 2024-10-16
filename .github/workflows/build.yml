@@ -118,8 +118,8 @@ jobs:
         run: |
           sudo apt-get -y update
           sudo apt-get -y install git gcc g++ build-essential cmake clang pkg-config \
-            libssl-dev libglib2.0-dev libpango1.0-dev libatk1.0-dev libgtk-3-dev libgdk-pixbuf2.0-dev \
-            libssl3 libnss3 libasound2 libxss1 libnspr4
+            libssl-dev libglib2.0-dev libpango1.0-dev libatk1.0-dev libgtk-3-dev libgdk-pixbuf-xlib-2.0-dev \
+            libssl3 libnss3 libasound2t64 libxss1 libnspr4
 
       - name: Install i686 deps
         if: ${{ matrix.config.arch == 'i686' }}
@@ -128,8 +128,8 @@ jobs:
           sudo apt-get -y update
           sudo apt-get -y install git gcc g++ build-essential cmake clang pkg-config:i386 \
             gcc-multilib g++-multilib \
-            libssl-dev:i386 libglib2.0-dev:i386 libpango1.0-dev:i386 libatk1.0-dev:i386 libgtk-3-dev:i386 libgdk-pixbuf2.0-dev:i386 \
-            libssl3:i386 libnss3:i386 libasound2:i386 libxss1:i386 libnspr4:i386
+            libssl-dev:i386 libglib2.0-dev:i386 libpango1.0-dev:i386 libatk1.0-dev:i386 libgtk-3-dev:i386 libgdk-pixbuf-xlib-2.0-dev:i386 \
+            libssl3:i386 libnss3:i386 libasound2t64:i386 libxss1:i386 libnspr4:i386
           echo "PKG_CONFIG_ALLOW_CROSS=1" >> "$GITHUB_ENV"
 
       - name: Install rust
