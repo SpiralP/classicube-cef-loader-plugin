@@ -12,8 +12,8 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y update \
     && apt-get -y install wget curl git gcc g++ build-essential cmake clang pkg-config \
     gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf libc6-dev-i386 \
-    libssl-dev:armhf libglib2.0-dev:armhf libpango1.0-dev:armhf libatk1.0-dev:armhf libgtk-3-dev:armhf libgdk-pixbuf2.0-dev:armhf \
-    libnss3:armhf libasound2:armhf libxss1:armhf libnspr4:armhf \
+    libssl-dev:armhf \
+    libssl1.1:armhf \
     && apt-get -y autoremove && apt-get -y clean && rm -rf /var/lib/apt \
     && rm -rf /tmp && mkdir /tmp && chmod 777 /tmp \
     && rm -rf /usr/share/doc /usr/share/man /usr/share/locale
