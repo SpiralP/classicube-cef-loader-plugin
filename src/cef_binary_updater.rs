@@ -25,7 +25,7 @@ use crate::{async_manager, print_async, status};
 #[cfg(not(all(target_os = "linux", target_arch = "x86")))]
 macro_rules! cef_version {
     () => {
-        "130.1.9+gfc42567+chromium-130.0.6723.70"
+        "130.1.10+g3470f6a+chromium-130.0.6723.92"
     };
 }
 
