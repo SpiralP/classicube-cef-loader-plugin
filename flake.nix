@@ -41,8 +41,8 @@
               with pkgs; [
                 cargo-release
                 clippy
-                rustfmt
                 rust-analyzer
+                (rustfmt.override { asNightly = true; })
               ] else [ ]);
 
             buildInputs = with pkgs; [
