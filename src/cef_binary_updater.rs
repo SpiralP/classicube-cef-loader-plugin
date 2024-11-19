@@ -1,4 +1,3 @@
-use anyhow::{bail, Error, Result};
 use std::{
     fs, io,
     io::{Read, Write},
@@ -12,6 +11,7 @@ use std::{
     time::Duration,
 };
 
+use anyhow::{bail, Error, Result};
 use classicube_helpers::color;
 use futures::{
     stream::{StreamExt, TryStreamExt},
