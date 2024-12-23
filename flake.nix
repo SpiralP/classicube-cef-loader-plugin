@@ -29,7 +29,7 @@
             cargoLock = {
               lockFile = ./Cargo.lock;
               outputHashes = {
-                "async-dispatcher-0.1.0" = "sha256-rqpQ176/PnI9vvPrwQvK3GJbryjb3hHkb+o1RyCZ3Vg=";
+                "async-dispatcher-0.1.0" = "sha256-GHKvmhHXvjSI2DZj+rdJugYcrNDkw8SGxRcNzGsF0VM=";
                 "classicube-helpers-3.0.0+classicube.1.3.7" = "sha256-3hWKS6NmAH0x+SOi/nBKJLIQi/3ilG7WSRrPvF++wGE=";
               };
             };
