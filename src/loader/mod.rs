@@ -8,7 +8,7 @@ use tracing::{debug, error};
 use crate::print;
 
 thread_local!(
-    static PLUGIN: Cell<Option<*mut IGameComponent>> = Cell::new(None);
+    static PLUGIN: Cell<Option<*mut IGameComponent>> = const { Cell::new(None) };
 );
 
 pub fn init() {

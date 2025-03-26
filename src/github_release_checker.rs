@@ -70,7 +70,7 @@ impl GitHubReleaseChecker {
     pub async fn get_latest_release(&self) -> Result<GitHubRelease> {
         let client = Self::make_client();
 
-        let bytes = client.get(&self.url()).send().await?.bytes().await?;
+        let bytes = client.get(self.url()).send().await?.bytes().await?;
 
         if let Ok(error) = serde_json::from_slice::<GitHubError>(&bytes) {
             bail!("{}", error.message);

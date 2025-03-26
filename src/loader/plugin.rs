@@ -10,7 +10,7 @@ use crate::{
 };
 
 thread_local!(
-    static LIBRARY: Cell<Option<*mut c_void>> = Cell::new(None);
+    static LIBRARY: Cell<Option<*mut c_void>> = const { Cell::new(None) };
 );
 
 fn get_error() -> String {
