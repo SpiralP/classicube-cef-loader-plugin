@@ -192,9 +192,6 @@ where
 }
 
 async fn download(version: &str) -> Result<()> {
-    use futures::compat::{Compat, Compat01As03};
-    use tokio_util::compat::{FuturesAsyncReadCompatExt, TokioAsyncReadCompatExt};
-
     let url = format!("https://cef-builds.spotifycdn.com/{}.tar.bz2", version).replace('+', "%2B");
 
     debug!("{}", url);
@@ -272,13 +269,9 @@ async fn download(version: &str) -> Result<()> {
     let stream = tokio_util::io::StreamReader::new(stream);
 
     let stream = tokio::io::BufReader::new(stream);
-    let stream = TokioAsyncReadCompatExt::compat(stream);
 
-    let stream = Compat::new(stream);
-    let decoder = bzip2::read::BzDecoder::new(stream);
-    let decoder = Compat01As03::new(decoder);
+    let decoder = async_compression::tokio::bufread::BzDecoder::new(stream);
 
-    let decoder = FuturesAsyncReadCompatExt::compat(decoder);
     let decoder = tokio::io::BufReader::new(decoder);
 
     let bad_reader = FuturesBlockOnReader {
