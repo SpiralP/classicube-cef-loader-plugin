@@ -8,26 +8,26 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-anyhow = "1"
+anyhow = "=1.0.97"
 async-dispatcher = { git = "https://github.com/SpiralP/rust-async-dispatcher.git", branch = "main" }
-backtrace = "0.3"
-bzip2 = { version = "0.4", features = ["tokio"] }
+backtrace = "=0.3.74"
+bzip2 = { version = "=0.4.4", features = ["tokio"] }
 classicube-helpers = { git = "https://github.com/SpiralP/rust-classicube-helpers.git", branch = "main" }
-classicube-sys = "4"
-futures = { version = "0.3", features = ["compat", "io-compat"] }
-futures-timer = "3"
-lazy_static = "1"
-reqwest = { version = "0.12", features = ["json", "stream"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-tar = "0.4"
-tokio = { version = "1", features = ["full"] }
-tokio-util = { version = "0.7", features = ["compat", "io"] }
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+classicube-sys = "=4.0.0"
+futures = { version = "=0.3.31", features = ["compat", "io-compat"] }
+futures-timer = "=3.0.3"
+lazy_static = "=1.5.0"
+reqwest = { version = "=0.12.14", features = ["json", "stream"] }
+serde = { version = "=1.0.219", features = ["derive"] }
+serde_json = "=1.0.140"
+tar = "=0.4.44"
+tokio = { version = "=1.44.2", features = ["full"] }
+tokio-util = { version = "=0.7.14", features = ["compat", "io"] }
+tracing = "=0.1.41"
+tracing-subscriber = { version = "=0.3.19", features = ["env-filter"] }
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2"
+libc = "=0.2.171"
 
 
 [package.metadata.release]
