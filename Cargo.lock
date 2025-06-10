@@ -35,7 +35,7 @@ checksum = "dcfed56ad506cb2c684a14971b8861fdc3baaaae314b9e5f9bb532cbe3ba7a4f"
 [[package]]
 name = "async-dispatcher"
 version = "0.1.0"
-source = "git+https://github.com/SpiralP/rust-async-dispatcher.git#f0e86ff7a59f895eda4bd12cabf238ebe601a7e4"
+source = "git+https://github.com/SpiralP/rust-async-dispatcher.git?branch=main#f0e86ff7a59f895eda4bd12cabf238ebe601a7e4"
 dependencies = [
  "futures 0.3.31",
 ]
@@ -211,7 +211,7 @@ dependencies = [
 [[package]]
 name = "classicube-helpers"
 version = "3.0.0+classicube.1.3.7"
-source = "git+https://github.com/SpiralP/rust-classicube-helpers.git#0624402a63305dfad0a6ec6624e10e5db3cfd861"
+source = "git+https://github.com/SpiralP/rust-classicube-helpers.git?branch=main#f6de5ac23ac9d03016921cd5c8fd28d03d4a7c1c"
 dependencies = [
  "async-dispatcher",
  "classicube-sys",
