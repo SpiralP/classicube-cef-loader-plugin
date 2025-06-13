@@ -27,7 +27,7 @@ tracing = "=0.1.41"
 tracing-subscriber = { version = "=0.3.19", features = ["env-filter"] }
 
 [target.'cfg(unix)'.dependencies]
-libc = "=0.2.172"
+libc = "=0.2.173"
 
 
 [package.metadata.release]
