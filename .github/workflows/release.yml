@@ -1,0 +1,17 @@
+name: Release
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write # for checkout, and to be able to create a release
+
+jobs:
+  release:
+    uses: SpiralP/github-reusable-workflows/.github/workflows/release.yml@938890d49329c54b8c282dcc4c37deab8423246a # main
