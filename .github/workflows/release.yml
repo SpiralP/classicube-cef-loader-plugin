@@ -7,7 +7,7 @@ on:
 
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false # don't cancel, since the commit this flow pushes will trigger it again
 
 permissions: {} # none, since we use a custom app
 
