@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 
 use anyhow::{bail, Context, Error, Result};
 use classicube_helpers::color;
@@ -54,7 +57,7 @@ impl GitHubReleaseChecker {
 
     async fn get_current_version(&self) -> Option<String> {
         if let Ok(bytes) = fs::read(&self.version_path()).await {
-            String::from_utf8(bytes).ok()
+            String::from_utf8(bytes).map(|s| s.trim().to_string()).ok()
         } else {
             None
         }

@@ -1,17 +1,19 @@
-mod cef_binary_updater;
-mod github_release_checker;
 mod loader;
 mod logger;
 mod panic;
-mod plugin_updater;
+mod updater;
 
-use std::{fs, os::raw::c_int, ptr};
+use std::{cell::Cell, fs, os::raw::c_int, ptr};
 
 use classicube_helpers::async_manager;
 use classicube_sys::{
     Chat_Add, Chat_AddOf, IGameComponent, MsgType_MSG_TYPE_CLIENTSTATUS_2, OwnedString,
 };
 use tracing::*;
+
+thread_local!(
+    static LOADED: Cell<bool> = const { Cell::new(false) };
+);
 
 extern "C" fn init() {
     panic::install_hook();
@@ -24,35 +26,8 @@ extern "C" fn init() {
     );
 
     fs::create_dir_all("cef").unwrap();
-    cef_binary_updater::prepare().unwrap();
-    loader::init();
 
     async_manager::initialize();
-
-    // never update if debug build
-    #[cfg(not(debug_assertions))]
-    {
-        async_manager::spawn(async move {
-            loop {
-                if let Err(e) = plugin_updater::update_plugins().await {
-                    error!("{:#?}", e);
-                    print_async(format!(
-                        "{}Failed to update CEF: {}{}",
-                        classicube_helpers::color::RED,
-                        classicube_helpers::color::WHITE,
-                        e
-                    ))
-                    .await;
-
-                    break;
-                }
-
-                // check again every 4 hours
-                async_manager::sleep(std::time::Duration::from_secs(4 * 60 * 60)).await;
-                debug!("auto-checking for updates again");
-            }
-        });
-    }
 }
 
 extern "C" fn free() {
@@ -78,7 +53,32 @@ extern "C" fn on_new_map() {
 extern "C" fn on_new_map_loaded() {
     debug!("OnNewMapLoaded");
 
-    loader::on_new_map_loaded();
+    if LOADED.get() {
+        loader::on_new_map_loaded();
+    } else {
+        LOADED.set(true);
+
+        async_manager::spawn(async move {
+            // don't update if debug build
+            if cfg!(not(debug_assertions)) {
+                if let Err(e) = updater::update_plugins().await {
+                    error!("{:#?}", e);
+                    print_async(format!(
+                        "{}Failed to update CEF: {}{e}",
+                        classicube_helpers::color::RED,
+                        classicube_helpers::color::WHITE
+                    ))
+                    .await;
+                }
+            }
+
+            async_manager::spawn_on_main_thread(async move {
+                loader::init();
+                loader::on_new_map();
+                loader::on_new_map_loaded();
+            });
+        });
+    }
 }
 
 #[allow(non_upper_case_globals)]

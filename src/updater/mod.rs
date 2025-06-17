@@ -1,9 +1,8 @@
-use anyhow::Result;
-use classicube_helpers::color;
-use futures::{prelude::*, stream};
-use tracing::debug;
+pub mod cef_binary;
+pub mod github_release;
 
-use crate::{cef_binary_updater, github_release_checker::GitHubReleaseChecker, print_async};
+use anyhow::Result;
+use github_release::GitHubReleaseChecker;
 
 // windows 64 bit
 
@@ -82,56 +81,26 @@ pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_macos_x86_64.dylib";
 #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
 pub const CEF_EXE_PATH: &str = "cef/cef-macos-x86_64";
 
-fn plugin_futures() -> Vec<impl Future<Output = Result<bool>>> {
-    macro_rules! add {
-        ($future:expr) => {{
-            async { $future.await }.boxed()
-        }};
-    }
+pub async fn update_plugins() -> Result<()> {
+    GitHubReleaseChecker::new(
+        "CEF Loader Plugin",
+        "SpiralP",
+        "classicube-cef-loader-plugin",
+        vec![CEF_PLUGIN_LOADER_PATH.into()],
+    )
+    .update()
+    .await?;
 
-    vec![
-        add!(GitHubReleaseChecker::new(
-            "CEF Loader Plugin",
-            "SpiralP",
-            "classicube-cef-loader-plugin",
-            vec![CEF_PLUGIN_LOADER_PATH.into()],
-        )
-        .update()),
-        add!(GitHubReleaseChecker::new(
-            "CEF Plugin",
-            "SpiralP",
-            "classicube-cef-plugin",
-            vec![CEF_PLUGIN_PATH.into(), CEF_EXE_PATH.into()],
-        )
-        .update()),
-        add!(cef_binary_updater::update()),
-    ]
-}
+    GitHubReleaseChecker::new(
+        "CEF Plugin",
+        "SpiralP",
+        "classicube-cef-plugin",
+        vec![CEF_PLUGIN_PATH.into(), CEF_EXE_PATH.into()],
+    )
+    .update()
+    .await?;
 
-pub async fn update_plugins() -> Result<bool> {
-    let mut had_updates = false;
+    cef_binary::update().await?;
 
-    let results = stream::iter(plugin_futures())
-        .buffer_unordered(4)
-        .collect::<Vec<Result<bool>>>()
-        .await;
-
-    for result in results {
-        let updated = result?;
-        if updated {
-            had_updates = true;
-        }
-    }
-
-    if had_updates {
-        print_async(format!(
-            "{}CEF finished downloading and will update on next launch",
-            color::SILVER
-        ))
-        .await;
-    } else {
-        debug!("everything up to date");
-    }
-
-    Ok(had_updates)
+    Ok(())
 }

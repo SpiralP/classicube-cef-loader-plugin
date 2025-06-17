@@ -1,6 +1,5 @@
 use std::{
-    fs, io,
-    io::{Read, Write},
+    io,
     marker::Unpin,
     path::{Component, Path, PathBuf},
     pin::Pin,
@@ -17,7 +16,10 @@ use futures::{
     stream::{StreamExt, TryStreamExt},
     Stream,
 };
-use tokio::io::{AsyncRead, AsyncReadExt};
+use tokio::{
+    fs::{self, File},
+    io::{AsyncRead, AsyncReadExt, AsyncWriteExt},
+};
 use tracing::*;
 
 use crate::{async_manager, print_async, status};
@@ -95,54 +97,26 @@ pub const CEF_BINARY_PATH: &str = "cef/cef_binary";
 #[cfg(target_os = "macos")]
 pub const CEF_BINARY_PATH: &str = "cef/Chromium Embedded Framework.framework";
 
-#[cfg(not(target_os = "macos"))]
-pub const CEF_BINARY_PATH_NEW: &str = "cef/cef_binary-new";
-
-#[cfg(target_os = "macos")]
-pub const CEF_BINARY_PATH_NEW: &str = "cef/Chromium Embedded Framework.framework-new";
-
 pub const CEF_BINARY_VERSION_PATH: &str = "cef/cef_binary.txt";
-pub const CEF_BINARY_VERSION_PATH_NEW: &str = "cef/cef_binary.txt-new";
 
-fn get_current_version() -> Option<String> {
-    fs::File::open(CEF_BINARY_VERSION_PATH)
-        .map(|mut f| {
-            let mut s = String::new();
-            f.read_to_string(&mut s).unwrap();
-            s
-        })
-        .ok()
-        .or_else(|| {
-            // also check cef_binary.txt-new file because
-            // we might be updating twice in a row
-            fs::File::open(CEF_BINARY_VERSION_PATH_NEW)
-                .map(|mut f| {
-                    let mut s = String::new();
-                    f.read_to_string(&mut s).unwrap();
-                    s
-                })
-                .ok()
-        })
-}
-
-pub fn prepare() -> Result<()> {
-    // cef's .bin files are locked hard so we can't do the flip/flop
-    if Path::new(CEF_BINARY_VERSION_PATH_NEW).is_file() && Path::new(CEF_BINARY_PATH_NEW).is_dir() {
-        if Path::new(CEF_BINARY_PATH).is_dir() {
-            fs::remove_dir_all(CEF_BINARY_PATH)?;
-        }
-        // mark as fully updated
-        fs::rename(CEF_BINARY_PATH_NEW, CEF_BINARY_PATH)?;
-        fs::rename(CEF_BINARY_VERSION_PATH_NEW, CEF_BINARY_VERSION_PATH)?;
+async fn get_current_version() -> Option<String> {
+    if let Ok(bytes) = fs::read(CEF_BINARY_VERSION_PATH).await {
+        String::from_utf8(bytes).map(|s| s.trim().to_string()).ok()
+    } else {
+        None
     }
-
-    Ok(())
 }
 
 pub async fn update() -> Result<bool> {
-    let current_version = get_current_version().unwrap_or_default();
+    let missing = !Path::new(CEF_BINARY_PATH).is_dir();
 
-    if current_version != CEF_VERSION {
+    let needs_update = missing
+        || get_current_version()
+            .await
+            .map(|cur| cur != CEF_VERSION)
+            .unwrap_or(true);
+
+    if needs_update {
         print_async(format!(
             "{}Updating {}CEF Binary {}to {}{}",
             color::PINK,
@@ -153,18 +127,16 @@ pub async fn update() -> Result<bool> {
         ))
         .await;
 
-        {
-            if Path::new(CEF_BINARY_PATH_NEW).is_dir() {
-                fs::remove_dir_all(CEF_BINARY_PATH_NEW)?;
-            }
-            fs::create_dir_all(CEF_BINARY_PATH_NEW)?;
-            download(CEF_VERSION).await?;
+        if Path::new(CEF_BINARY_PATH).is_dir() {
+            fs::remove_dir_all(CEF_BINARY_PATH).await?;
         }
+        fs::create_dir_all(CEF_BINARY_PATH).await?;
+        download(CEF_VERSION).await?;
 
         {
-            // mark as half-updated
-            let mut f = fs::File::create(CEF_BINARY_VERSION_PATH_NEW)?;
-            write!(f, "{}", CEF_VERSION)?;
+            // mark as updated
+            let mut f = File::create(CEF_BINARY_VERSION_PATH).await?;
+            f.write_all(CEF_VERSION.as_bytes()).await?;
         }
 
         print_async(format!("{}CEF Binary finished downloading", color::LIME)).await;
@@ -182,7 +154,7 @@ where
     async_reader: R,
 }
 
-impl<R> Read for FuturesBlockOnReader<R>
+impl<R> io::Read for FuturesBlockOnReader<R>
 where
     R: AsyncRead + Unpin,
 {
@@ -316,10 +288,10 @@ async fn download(version: &str) -> Result<()> {
 
             if let Some(Component::Normal(first_part)) = trimmed_path_components.next() {
                 if first_part == "README.txt" || first_part == "LICENSE.txt" {
-                    let out_path = Path::new(CEF_BINARY_PATH_NEW).join(first_part);
+                    let out_path = Path::new(CEF_BINARY_PATH).join(first_part);
                     debug!("{:?} {:?}", path, out_path);
 
-                    fs::create_dir_all(out_path.parent().unwrap())?;
+                    std::fs::create_dir_all(out_path.parent().unwrap())?;
                     file.unpack(&out_path)?;
                     continue;
                 }
@@ -334,10 +306,10 @@ async fn download(version: &str) -> Result<()> {
                         {
                             let even_more_trimmed: PathBuf = trimmed_path_components.collect();
                             // icu .dat and .bin files must be next to cef.dll
-                            let out_path = Path::new(CEF_BINARY_PATH_NEW).join(even_more_trimmed);
+                            let out_path = Path::new(CEF_BINARY_PATH).join(even_more_trimmed);
                             debug!("{:?} {:?}", path, out_path);
 
-                            fs::create_dir_all(out_path.parent().unwrap())?;
+                            std::fs::create_dir_all(out_path.parent().unwrap())?;
                             file.unpack(&out_path)?;
 
                             if ext == "so" {
@@ -368,11 +340,10 @@ async fn download(version: &str) -> Result<()> {
                         {
                             if second_part == "Chromium Embedded Framework.framework" {
                                 let even_more_trimmed: PathBuf = trimmed_path_components.collect();
-                                let out_path =
-                                    Path::new(CEF_BINARY_PATH_NEW).join(&even_more_trimmed);
+                                let out_path = Path::new(CEF_BINARY_PATH).join(&even_more_trimmed);
                                 debug!("{:?} {:?}", path, out_path);
 
-                                fs::create_dir_all(&out_path.parent().unwrap())?;
+                                std::fs::create_dir_all(&out_path.parent().unwrap())?;
                                 file.unpack(&out_path)?;
                             }
                         }
@@ -413,7 +384,7 @@ fn test_update() {
     crate::logger::initialize(true, false);
     crate::async_manager::initialize();
 
-    fs::create_dir_all("cef").unwrap();
+    std::fs::create_dir_all("cef").unwrap();
     crate::async_manager::block_on_local(async {
         crate::async_manager::spawn(async {
             assert!(update().await.unwrap());
@@ -424,5 +395,5 @@ fn test_update() {
 
     crate::async_manager::shutdown();
 
-    fs::remove_dir_all("cef").unwrap();
+    std::fs::remove_dir_all("cef").unwrap();
 }
