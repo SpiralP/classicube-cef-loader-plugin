@@ -179,7 +179,7 @@ impl GitHubReleaseChecker {
                         .send()
                         .await?
                         .bytes_stream()
-                        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e)),
+                        .map_err(io::Error::other),
                 );
 
                 io::copy(&mut stream, &mut f).await?;
@@ -222,6 +222,7 @@ impl GitHubReleaseChecker {
 #[derive(Debug, Deserialize)]
 pub struct GitHubRelease {
     /// error message
+    #[allow(dead_code)]
     pub message: Option<String>,
 
     pub tag_name: String,

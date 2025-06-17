@@ -263,7 +263,7 @@ async fn download(version: &str) -> Result<()> {
                 downloaded.fetch_add(len, Ordering::SeqCst);
             }
         })
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+        .map_err(io::Error::other)
         .boxed();
 
     let stream = tokio_util::io::StreamReader::new(stream);
