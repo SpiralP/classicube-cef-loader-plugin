@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   linux_nix:
-    uses: SpiralP/github-reusable-workflows/.github/workflows/build.yml@3e16edc73006d279937ab0cb2c36bc88cd586017 # main
+    uses: SpiralP/github-reusable-workflows/.github/workflows/build.yml@27551483ab0019aa57624e363c928028a95f881b # main
 
   windows_x86:
     name: Build Windows ${{ matrix.config.arch }}
@@ -32,7 +32,7 @@ jobs:
             target: i686-pc-windows-msvc
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: setup-msbuild
         uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
@@ -66,7 +66,7 @@ jobs:
             -Destination '.\classicube_cef_loader_windows_${{ matrix.config.arch }}.dll'
 
       - name: VirusTotal Scan
-        uses: crazy-max/ghaction-virustotal@d34968c958ae283fe976efed637081b9f9dcf74f # v4
+        uses: crazy-max/ghaction-virustotal@d34968c958ae283fe976efed637081b9f9dcf74f # v4.2.0
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         id: virustotal
         with:
@@ -80,7 +80,7 @@ jobs:
           node .github\format-release.js '${{ steps.virustotal.outputs.analysis }}' > release_body_text.txt
 
       - name: Upload Release
-        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
         if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.config.arch == 'x86_64' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -90,7 +90,7 @@ jobs:
             classicube_cef_loader_windows_${{ matrix.config.arch }}.dll
 
       - name: Upload Release
-        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
         if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.config.arch != 'x86_64' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -111,7 +111,7 @@ jobs:
             target: i686-unknown-linux-gnu
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install x86_64 deps
         if: ${{ matrix.config.arch == 'x86_64' }}
@@ -162,7 +162,7 @@ jobs:
             './classicube_cef_loader_linux_${{ matrix.config.arch }}.so'
 
       - name: Upload Release
-        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -183,7 +183,7 @@ jobs:
             target: aarch64-unknown-linux-gnu
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install armhf deps
         if: ${{ matrix.config.arch == 'armhf' }}
@@ -229,7 +229,7 @@ jobs:
             './classicube_cef_loader_linux_${{ matrix.config.arch }}.so'
 
       - name: Upload Release
-        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -248,7 +248,7 @@ jobs:
             target: x86_64-apple-darwin
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install rust
         run: |
@@ -280,7 +280,7 @@ jobs:
             'classicube_cef_loader_macos_${{ matrix.config.arch }}.dylib'
 
       - name: Upload Release
-        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
