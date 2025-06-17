@@ -22,36 +22,36 @@ struct GitHubError {
 
 pub struct GitHubReleaseChecker {
     name: String,
+    #[allow(dead_code)]
     owner: String,
     repo: String,
     asset_paths: Vec<PathBuf>,
+    release: GitHubRelease,
 }
 
 impl GitHubReleaseChecker {
-    pub fn new<S: Into<String>, P: Into<Vec<PathBuf>>>(
+    pub async fn create<S: Into<String>, P: Into<Vec<PathBuf>>>(
         name: S,
         owner: S,
         repo: S,
         asset_paths: P,
-    ) -> Self {
-        Self {
+    ) -> Result<Self> {
+        let owner: String = owner.into();
+        let repo: String = repo.into();
+        let release = Self::get_latest_release(&owner, &repo).await?;
+
+        Ok(Self {
             name: name.into(),
-            owner: owner.into(),
-            repo: repo.into(),
+            owner,
+            repo,
             asset_paths: asset_paths.into(),
-        }
+            release,
+        })
     }
 
     fn version_path(&self) -> PathBuf {
         let versions_dir = Path::new(VERSIONS_DIR_PATH);
         versions_dir.join(format!("{}.txt", self.repo))
-    }
-
-    fn url(&self) -> String {
-        format!(
-            "https://api.github.com/repos/{}/{}/releases/latest",
-            self.owner, self.repo
-        )
     }
 
     async fn get_current_version(&self) -> Option<String> {
@@ -62,10 +62,10 @@ impl GitHubReleaseChecker {
         }
     }
 
-    pub async fn get_latest_release(&self) -> Result<GitHubRelease> {
-        let client = make_client();
-
-        let mut request = client.get(self.url());
+    async fn get_latest_release(owner: &str, repo: &str) -> Result<GitHubRelease> {
+        let mut request = make_client().get(format!(
+            "https://api.github.com/repos/{owner}/{repo}/releases/latest"
+        ));
         if let Ok(token) = env::var("GITHUB_TOKEN") {
             let mut header_value = HeaderValue::from_str(&format!("token {token}")).unwrap();
             header_value.set_sensitive(true);
@@ -107,13 +107,11 @@ impl GitHubReleaseChecker {
             }
         }
 
-        let release = self.get_latest_release().await?;
-
         let needs_update = missing_asset
             || self
                 .get_current_version()
                 .await
-                .map(|cur| cur != release.published_at)
+                .map(|cur| cur != self.release.published_at)
                 .unwrap_or(true);
 
         if needs_update {
@@ -121,18 +119,18 @@ impl GitHubReleaseChecker {
                 "{}New release update {}{} {}for {}{}!",
                 color::PINK,
                 color::GREEN,
-                release.tag_name,
+                self.release.tag_name,
                 color::PINK,
                 color::LIME,
                 self.name
             ))
             .await;
 
-            self.update_assets(&release).await?;
+            self.update_assets(&self.release).await?;
 
             {
                 // mark that we updated
-                fs::write(&self.version_path(), release.published_at).await?;
+                fs::write(&self.version_path(), &self.release.published_at).await?;
             }
 
             print_async(format!("{}{} finished downloading", color::LIME, self.name)).await;
@@ -219,6 +217,23 @@ impl GitHubReleaseChecker {
 
         Ok(())
     }
+
+    pub async fn get_file(&self, file_path: &str) -> Result<String> {
+        let owner = &self.owner;
+        let repo = &self.repo;
+        let tag_name = &self.release.tag_name;
+
+        let text = make_client()
+            .get(format!(
+                "https://raw.githubusercontent.com/{owner}/{repo}/refs/tags/{tag_name}/{file_path}"
+            ))
+            .send()
+            .await?
+            .text()
+            .await?;
+
+        Ok(text)
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -242,12 +257,13 @@ pub struct GitHubReleaseAsset {
 #[ignore]
 #[tokio::test]
 async fn test_github_release_checker() {
-    let loader_plugin = GitHubReleaseChecker::new(
+    let release = GitHubReleaseChecker::create(
         "Cef Loader",
         "SpiralP",
         "classicube-cef-loader-plugin",
         vec![],
-    );
-    let release = loader_plugin.get_latest_release().await.unwrap();
-    println!("{:#?}", release);
+    )
+    .await
+    .unwrap();
+    println!("{:#?}", release.release);
 }

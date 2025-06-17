@@ -95,25 +95,44 @@ pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_macos_x86_64.dylib";
 pub const CEF_EXE_PATH: &str = "cef/cef-macos-x86_64";
 
 pub async fn update_plugins() -> Result<()> {
-    GitHubReleaseChecker::new(
+    let cef_loader_plugin_updated = GitHubReleaseChecker::create(
         "CEF Loader Plugin",
         "SpiralP",
         "classicube-cef-loader-plugin",
         vec![CEF_PLUGIN_LOADER_PATH.into()],
     )
+    .await?
     .update()
     .await?;
 
-    GitHubReleaseChecker::new(
+    if cef_loader_plugin_updated {
+        // TODO should we break if cef loader plugin updated?
+    }
+
+    let cef_plugin_release = GitHubReleaseChecker::create(
         "CEF Plugin",
         "SpiralP",
         "classicube-cef-plugin",
         vec![CEF_PLUGIN_PATH.into(), CEF_EXE_PATH.into()],
     )
-    .update()
     .await?;
 
-    cef_binary::update().await?;
+    let cef_binary_version = if cfg!(all(target_os = "linux", target_arch = "x86")) {
+        // TODO this probably doesn't work anymore, since newer cef plugin requires matching cef_binary version
+        // Linux x86 32-bit builds are discontinued after version 101
+        // https://cef-builds.spotifycdn.com/index.html#linux32
+        "101.0.18+g367b4a0+chromium-101.0.4951.67".to_string()
+    } else {
+        cef_plugin_release
+            .get_file("cef_binary_version")
+            .await?
+            .trim()
+            .to_string()
+    };
+
+    cef_plugin_release.update().await?;
+
+    cef_binary::update(&cef_binary_version).await?;
 
     Ok(())
 }

@@ -24,72 +24,26 @@ use tracing::*;
 
 use crate::{async_manager, print_async, status, updater::make_client};
 
-#[cfg(not(all(target_os = "linux", target_arch = "x86")))]
-macro_rules! cef_version {
-    () => {
-        "134.3.8+gfe66d80+chromium-134.0.6998.166"
-    };
-}
-
-// Linux x86 32-bit builds are discontinued after version 101 (details)
-// https://cef-builds.spotifycdn.com/index.html#linux32
-#[cfg(all(target_os = "linux", target_arch = "x86"))]
-macro_rules! cef_version {
-    () => {
-        "101.0.18+g367b4a0+chromium-101.0.4951.67"
-    };
-}
-
 #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
-macro_rules! cef_arch {
-    () => {
-        "windows64"
-    };
-}
+pub const CEF_ARCH: &str = "windows64";
 
 #[cfg(all(target_os = "windows", target_arch = "x86"))]
-macro_rules! cef_arch {
-    () => {
-        "windows32"
-    };
-}
+pub const CEF_ARCH: &str = "windows32";
 
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-macro_rules! cef_arch {
-    () => {
-        "linux64"
-    };
-}
+pub const CEF_ARCH: &str = "linux64";
 
 #[cfg(all(target_os = "linux", target_arch = "x86"))]
-macro_rules! cef_arch {
-    () => {
-        "linux32"
-    };
-}
+pub const CEF_ARCH: &str = "linux32";
 
 #[cfg(all(target_os = "linux", target_arch = "arm"))]
-macro_rules! cef_arch {
-    () => {
-        "linuxarm"
-    };
-}
+pub const CEF_ARCH: &str = "linuxarm";
 
 #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
-macro_rules! cef_arch {
-    () => {
-        "linuxarm64"
-    };
-}
+pub const CEF_ARCH: &str = "linuxarm64";
 
 #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
-macro_rules! cef_arch {
-    () => {
-        "macosx64"
-    };
-}
-
-pub const CEF_VERSION: &str = concat!("cef_binary_", cef_version!(), "_", cef_arch!(), "_minimal");
+pub const CEF_ARCH: &str = "macosx64";
 
 pub const CEF_CACHE_PATH: &str = "cef/cache";
 
@@ -98,6 +52,12 @@ pub const CEF_BINARY_PATH: &str = "cef/cef_binary";
 
 #[cfg(target_os = "macos")]
 pub const CEF_BINARY_PATH: &str = "cef/Chromium Embedded Framework.framework";
+
+#[cfg(not(target_os = "macos"))]
+pub const CEF_BINARY_PATH_NEW: &str = "cef/cef_binary-new";
+
+#[cfg(target_os = "macos")]
+pub const CEF_BINARY_PATH_NEW: &str = "cef/Chromium Embedded Framework.framework-new";
 
 pub const CEF_BINARY_VERSION_PATH: &str = "cef/cef_binary.txt";
 
@@ -109,13 +69,13 @@ async fn get_current_version() -> Option<String> {
     }
 }
 
-pub async fn update() -> Result<bool> {
+pub async fn update(cef_binary_version: &str) -> Result<bool> {
     let missing = !Path::new(CEF_BINARY_PATH).is_dir();
 
     let needs_update = missing
         || get_current_version()
             .await
-            .map(|cur| cur != CEF_VERSION)
+            .map(|cur| cur != cef_binary_version)
             .unwrap_or(true);
 
     if needs_update {
@@ -125,23 +85,25 @@ pub async fn update() -> Result<bool> {
             color::LIME,
             color::PINK,
             color::GREEN,
-            CEF_VERSION
+            cef_binary_version
         ))
         .await;
 
+        if Path::new(CEF_BINARY_PATH_NEW).is_dir() {
+            fs::remove_dir_all(CEF_BINARY_PATH_NEW).await?;
+        }
+        fs::create_dir_all(CEF_BINARY_PATH_NEW).await?;
+        download(cef_binary_version).await?;
+
+        // remove old cef binary caches
         if Path::new(CEF_CACHE_PATH).is_dir() {
             fs::remove_dir_all(CEF_CACHE_PATH).await?;
         }
-        if Path::new(CEF_BINARY_PATH).is_dir() {
-            fs::remove_dir_all(CEF_BINARY_PATH).await?;
-        }
-        fs::create_dir_all(CEF_BINARY_PATH).await?;
-        download(CEF_VERSION).await?;
 
         {
             // mark as updated
             let mut f = File::create(CEF_BINARY_VERSION_PATH).await?;
-            f.write_all(CEF_VERSION.as_bytes()).await?;
+            f.write_all(cef_binary_version.as_bytes()).await?;
         }
 
         print_async(format!("{}CEF Binary finished downloading", color::LIME)).await;
@@ -168,8 +130,11 @@ where
     }
 }
 
-async fn download(version: &str) -> Result<()> {
-    let url = format!("https://cef-builds.spotifycdn.com/{}.tar.bz2", version).replace('+', "%2B");
+async fn download(cef_binary_version: &str) -> Result<()> {
+    let url = format!(
+        "https://cef-builds.spotifycdn.com/cef_binary_{cef_binary_version}_{CEF_ARCH}_minimal.tar.bz2"
+    )
+    .replace('+', "%2B");
 
     debug!("{}", url);
 
@@ -293,7 +258,7 @@ async fn download(version: &str) -> Result<()> {
 
             if let Some(Component::Normal(first_part)) = trimmed_path_components.next() {
                 if first_part == "README.txt" || first_part == "LICENSE.txt" {
-                    let out_path = Path::new(CEF_BINARY_PATH).join(first_part);
+                    let out_path = Path::new(CEF_BINARY_PATH_NEW).join(first_part);
                     debug!("{:?} {:?}", path, out_path);
 
                     std::fs::create_dir_all(out_path.parent().unwrap())?;
@@ -311,7 +276,7 @@ async fn download(version: &str) -> Result<()> {
                         {
                             let even_more_trimmed: PathBuf = trimmed_path_components.collect();
                             // icu .dat and .bin files must be next to cef.dll
-                            let out_path = Path::new(CEF_BINARY_PATH).join(even_more_trimmed);
+                            let out_path = Path::new(CEF_BINARY_PATH_NEW).join(even_more_trimmed);
                             debug!("{:?} {:?}", path, out_path);
 
                             std::fs::create_dir_all(out_path.parent().unwrap())?;
@@ -345,7 +310,8 @@ async fn download(version: &str) -> Result<()> {
                         {
                             if second_part == "Chromium Embedded Framework.framework" {
                                 let even_more_trimmed: PathBuf = trimmed_path_components.collect();
-                                let out_path = Path::new(CEF_BINARY_PATH).join(&even_more_trimmed);
+                                let out_path =
+                                    Path::new(CEF_BINARY_PATH_NEW).join(&even_more_trimmed);
                                 debug!("{:?} {:?}", path, out_path);
 
                                 std::fs::create_dir_all(&out_path.parent().unwrap())?;
@@ -360,6 +326,11 @@ async fn download(version: &str) -> Result<()> {
         Ok::<(), Error>(())
     })
     .await??;
+
+    if Path::new(CEF_BINARY_PATH).is_dir() {
+        fs::remove_dir_all(CEF_BINARY_PATH).await?;
+    }
+    fs::rename(CEF_BINARY_PATH_NEW, CEF_BINARY_PATH).await?;
 
     running.store(false, Ordering::SeqCst);
 
@@ -392,7 +363,9 @@ fn test_update() {
     std::fs::create_dir_all("cef").unwrap();
     crate::async_manager::block_on_local(async {
         crate::async_manager::spawn(async {
-            assert!(update().await.unwrap());
+            assert!(update("134.3.8+gfe66d80+chromium-134.0.6998.166")
+                .await
+                .unwrap());
         })
         .await
         .unwrap();

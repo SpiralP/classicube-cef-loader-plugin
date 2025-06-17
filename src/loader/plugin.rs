@@ -3,7 +3,6 @@ use std::{cell::Cell, env, ffi::CString, fs, os::raw::c_void, path::Path};
 use anyhow::{bail, Context, Result};
 use classicube_helpers::time;
 use classicube_sys::{DynamicLib_Get2, DynamicLib_Load2, IGameComponent, OwnedString};
-use tracing::warn;
 
 use crate::updater::{cef_binary::CEF_BINARY_PATH, CEF_EXE_PATH, CEF_PLUGIN_PATH};
 
@@ -56,7 +55,7 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         )
         .context("couldn't copy cef exe")
         {
-            warn!("{:#?}", e);
+            tracing::warn!("{:#?}", e);
             crate::print(format!(
                 "{}cef: {}{}",
                 classicube_helpers::color::RED,
