@@ -1,6 +1,5 @@
 mod async_manager;
 mod cef_binary_updater;
-mod chat_command;
 mod github_release_checker;
 mod loader;
 mod logger;
@@ -27,8 +26,6 @@ extern "C" fn init() {
     fs::create_dir_all("cef").unwrap();
     cef_binary_updater::prepare().unwrap();
     loader::init();
-
-    chat_command::initialize();
 
     async_manager::initialize();
 
