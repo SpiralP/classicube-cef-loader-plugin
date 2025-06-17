@@ -3,6 +3,7 @@ use std::{cell::Cell, env, ffi::CString, fs, os::raw::c_void, path::Path};
 use anyhow::{bail, Context, Result};
 use classicube_helpers::time;
 use classicube_sys::{DynamicLib_Get2, DynamicLib_Load2, IGameComponent, OwnedString};
+use tracing::warn;
 
 use crate::updater::{cef_binary::CEF_BINARY_PATH, CEF_EXE_PATH, CEF_PLUGIN_PATH};
 
@@ -49,11 +50,20 @@ pub fn try_init() -> Result<*mut IGameComponent> {
     #[cfg(target_os = "windows")]
     {
         // copy cef-windows-x86_64.exe to cef.exe
-        fs::copy(
+        if let Err(e) = fs::copy(
             CEF_EXE_PATH,
             Path::new(CEF_EXE_PATH).parent().unwrap().join("cef.exe"),
         )
-        .context("couldn't copy cef exe")?;
+        .context("couldn't copy cef exe")
+        {
+            warn!("{:#?}", e);
+            crate::print(format!(
+                "{}cef: {}{}",
+                classicube_helpers::color::RED,
+                classicube_helpers::color::WHITE,
+                e
+            ));
+        }
 
         // add cef/cef_binary and cef/ to PATH so that cef.dll is found,
         // and cef.exe can run
