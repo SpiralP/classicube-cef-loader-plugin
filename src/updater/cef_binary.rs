@@ -22,7 +22,7 @@ use tokio::{
 };
 use tracing::*;
 
-use crate::{async_manager, print_async, status};
+use crate::{async_manager, print_async, status, updater::make_client};
 
 #[cfg(not(all(target_os = "linux", target_arch = "x86")))]
 macro_rules! cef_version {
@@ -170,7 +170,7 @@ async fn download(version: &str) -> Result<()> {
 
     let running = Arc::new(AtomicBool::new(true));
     let downloaded = Arc::new(AtomicUsize::new(0usize));
-    let response = reqwest::get(&url).await?;
+    let response = make_client().get(&url).send().await?;
 
     let maybe_content_length = response.content_length();
 

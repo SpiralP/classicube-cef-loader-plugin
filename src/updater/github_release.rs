@@ -6,15 +6,14 @@ use std::{
 use anyhow::{bail, Context, Error, Result};
 use classicube_helpers::color;
 use futures::stream::TryStreamExt;
+use reqwest::header::{HeaderValue, AUTHORIZATION};
 use serde::Deserialize;
 use tokio::{fs, io};
 use tracing::*;
 
-use crate::print_async;
+use crate::{print_async, updater::make_client};
 
 const VERSIONS_DIR_PATH: &str = "cef";
-
-const APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
 #[derive(Debug, Deserialize)]
 struct GitHubError {
@@ -63,17 +62,17 @@ impl GitHubReleaseChecker {
         }
     }
 
-    fn make_client() -> reqwest::Client {
-        reqwest::Client::builder()
-            .user_agent(APP_USER_AGENT)
-            .build()
-            .unwrap()
-    }
-
     pub async fn get_latest_release(&self) -> Result<GitHubRelease> {
-        let client = Self::make_client();
+        let client = make_client();
 
-        let bytes = client.get(self.url()).send().await?.bytes().await?;
+        let mut request = client.get(self.url());
+        if let Ok(token) = env::var("GITHUB_TOKEN") {
+            let mut header_value = HeaderValue::from_str(&format!("token {token}")).unwrap();
+            header_value.set_sensitive(true);
+            request = request.header(AUTHORIZATION, header_value);
+        }
+
+        let bytes = request.send().await?.bytes().await?;
 
         if let Ok(error) = serde_json::from_slice::<GitHubError>(&bytes) {
             bail!("{}", error.message);
@@ -177,7 +176,7 @@ impl GitHubReleaseChecker {
                 let mut f = fs::File::create(&new_path).await?;
 
                 let mut stream = tokio_util::io::StreamReader::new(
-                    Self::make_client()
+                    make_client()
                         .get(&asset.browser_download_url)
                         .send()
                         .await?

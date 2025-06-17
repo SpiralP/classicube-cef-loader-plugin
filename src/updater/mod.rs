@@ -1,8 +1,21 @@
 pub mod cef_binary;
 pub mod github_release;
 
+use std::time::Duration;
+
 use anyhow::Result;
 use github_release::GitHubReleaseChecker;
+
+pub const APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
+
+pub fn make_client() -> reqwest::Client {
+    reqwest::Client::builder()
+        .user_agent(APP_USER_AGENT)
+        .connect_timeout(Duration::from_secs(5))
+        .read_timeout(Duration::from_secs(5))
+        .build()
+        .unwrap()
+}
 
 // windows 64 bit
 
