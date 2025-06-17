@@ -91,6 +91,8 @@ macro_rules! cef_arch {
 
 pub const CEF_VERSION: &str = concat!("cef_binary_", cef_version!(), "_", cef_arch!(), "_minimal");
 
+pub const CEF_CACHE_PATH: &str = "cef/cache";
+
 #[cfg(not(target_os = "macos"))]
 pub const CEF_BINARY_PATH: &str = "cef/cef_binary";
 
@@ -127,6 +129,9 @@ pub async fn update() -> Result<bool> {
         ))
         .await;
 
+        if Path::new(CEF_CACHE_PATH).is_dir() {
+            fs::remove_dir_all(CEF_CACHE_PATH).await?;
+        }
         if Path::new(CEF_BINARY_PATH).is_dir() {
             fs::remove_dir_all(CEF_BINARY_PATH).await?;
         }
