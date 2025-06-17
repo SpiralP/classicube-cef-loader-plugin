@@ -1,4 +1,3 @@
-mod async_manager;
 mod cef_binary_updater;
 mod github_release_checker;
 mod loader;
@@ -8,6 +7,7 @@ mod plugin_updater;
 
 use std::{fs, os::raw::c_int, ptr};
 
+use classicube_helpers::async_manager;
 use classicube_sys::{
     Chat_Add, Chat_AddOf, IGameComponent, MsgType_MSG_TYPE_CLIENTSTATUS_2, OwnedString,
 };
