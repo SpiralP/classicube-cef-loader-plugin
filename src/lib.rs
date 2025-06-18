@@ -3,11 +3,12 @@ mod logger;
 mod panic;
 mod updater;
 
-use std::{cell::Cell, fs, os::raw::c_int, ptr};
+use std::{cell::Cell, ffi::CString, fs, os::raw::c_int, ptr};
 
 use classicube_helpers::async_manager;
 use classicube_sys::{
-    Chat_Add, Chat_AddOf, IGameComponent, MsgType_MSG_TYPE_CLIENTSTATUS_2, OwnedString,
+    Chat_Add, Chat_AddOf, IGameComponent, MsgType_MSG_TYPE_CLIENTSTATUS_2, OwnedString, Server,
+    String_AppendConst,
 };
 use tracing::*;
 
@@ -26,6 +27,14 @@ extern "C" fn init() {
     );
 
     fs::create_dir_all("cef").unwrap();
+
+    {
+        let append_app_name = CString::new(" cef").unwrap();
+        let c_str = append_app_name.as_ptr();
+        unsafe {
+            String_AppendConst(&raw mut Server.AppName, c_str);
+        }
+    }
 
     async_manager::initialize();
 }

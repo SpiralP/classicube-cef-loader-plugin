@@ -118,7 +118,6 @@ pub async fn update_plugins() -> Result<()> {
     .await?;
 
     let cef_binary_version = if cfg!(all(target_os = "linux", target_arch = "x86")) {
-        // TODO this probably doesn't work anymore, since newer cef plugin requires matching cef_binary version
         // Linux x86 32-bit builds are discontinued after version 101
         // https://cef-builds.spotifycdn.com/index.html#linux32
         "101.0.18+g367b4a0+chromium-101.0.4951.67".to_string()
