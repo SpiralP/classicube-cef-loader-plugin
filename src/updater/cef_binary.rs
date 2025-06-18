@@ -140,7 +140,7 @@ async fn download(cef_binary_version: &str) -> Result<()> {
 
     let running = Arc::new(AtomicBool::new(true));
     let downloaded = Arc::new(AtomicUsize::new(0usize));
-    let response = make_client().get(&url).send().await?;
+    let response = make_client().get(&url).send().await?.error_for_status()?;
 
     let maybe_content_length = response.content_length();
 

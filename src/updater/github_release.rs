@@ -178,6 +178,7 @@ impl GitHubReleaseChecker {
                         .get(&asset.browser_download_url)
                         .send()
                         .await?
+                        .error_for_status()?
                         .bytes_stream()
                         .map_err(io::Error::other),
                 );
@@ -229,6 +230,7 @@ impl GitHubReleaseChecker {
             ))
             .send()
             .await?
+            .error_for_status()?
             .text()
             .await?;
 
