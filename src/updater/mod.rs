@@ -94,6 +94,17 @@ pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_macos_x86_64.dylib";
 #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
 pub const CEF_EXE_PATH: &str = "cef/cef-macos-x86_64";
 
+// macos aarch64
+
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_macos_aarch64.dylib";
+
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_macos_aarch64.dylib";
+
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+pub const CEF_EXE_PATH: &str = "cef/cef-macos-aarch64";
+
 pub async fn update_plugins() -> Result<()> {
     let cef_loader_plugin_updated = GitHubReleaseChecker::create(
         "CEF Loader Plugin",

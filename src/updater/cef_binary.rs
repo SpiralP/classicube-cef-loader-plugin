@@ -45,6 +45,9 @@ pub const CEF_ARCH: &str = "linuxarm64";
 #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
 pub const CEF_ARCH: &str = "macosx64";
 
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+pub const CEF_ARCH: &str = "macosarm64";
+
 pub const CEF_CACHE_PATH: &str = "cef/cache";
 
 #[cfg(not(target_os = "macos"))]
