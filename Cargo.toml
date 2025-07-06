@@ -13,7 +13,7 @@ async-compression = { version = "=0.4.25", features = ["bzip2", "tokio"] }
 async-dispatcher = { git = "https://github.com/SpiralP/rust-async-dispatcher.git", branch = "main" }
 backtrace = "=0.3.75"
 classicube-helpers = { git = "https://github.com/SpiralP/rust-classicube-helpers.git", branch = "main" }
-classicube-sys = "=4.0.0"
+classicube-sys = "=4.1.2"
 futures = "=0.3.31"
 futures-timer = "=3.0.3"
 lazy_static = "=1.5.0"
