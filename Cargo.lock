@@ -34,9 +34,9 @@ checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
 
 [[package]]
 name = "async-compression"
-version = "0.4.26"
+version = "0.4.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "937f41778d8baa0b8984a101f48ec5d2e5b0d23a3f9235b2066eef29c3472bb9"
+checksum = "ddb939d66e4ae03cee6091612804ba446b12878410cfa17f785f4dd67d4014e8"
 dependencies = [
  "bzip2",
  "futures-core",
@@ -195,7 +195,7 @@ dependencies = [
 [[package]]
 name = "classicube-helpers"
 version = "3.0.0+classicube.1.3.7"
-source = "git+https://github.com/SpiralP/rust-classicube-helpers.git?branch=main#6541f9bcc573b37f89c2c7e92e077ec2c9df9110"
+source = "git+https://github.com/SpiralP/rust-classicube-helpers.git?branch=main#4962247d8505f81ec78d9a284157ee798d5ce38a"
 dependencies = [
  "async-dispatcher",
  "classicube-sys",
