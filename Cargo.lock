@@ -195,7 +195,7 @@ dependencies = [
 [[package]]
 name = "classicube-helpers"
 version = "3.0.0+classicube.1.3.7"
-source = "git+https://github.com/SpiralP/rust-classicube-helpers.git?branch=main#6541f9bcc573b37f89c2c7e92e077ec2c9df9110"
+source = "git+https://github.com/SpiralP/rust-classicube-helpers.git?branch=main#650acdd6d57a8678910a20d19a06d3f43918e67b"
 dependencies = [
  "async-dispatcher",
  "classicube-sys",
