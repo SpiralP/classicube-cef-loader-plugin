@@ -19,7 +19,7 @@ futures-timer = "=3.0.3"
 lazy_static = "=1.5.0"
 reqwest = { version = "=0.12.22", features = ["json", "stream"] }
 serde = { version = "=1.0.219", features = ["derive"] }
-serde_json = "=1.0.140"
+serde_json = "=1.0.141"
 tar = "=0.4.44"
 tokio = { version = "=1.46.1", features = ["full"] }
 tokio-util = { version = "=0.7.15", features = ["io"] }
