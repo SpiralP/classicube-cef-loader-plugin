@@ -17,7 +17,7 @@ classicube-sys = "=4.1.2"
 futures = "=0.3.31"
 futures-timer = "=3.0.3"
 lazy_static = "=1.5.0"
-reqwest = { version = "=0.12.22", features = ["json", "stream"] }
+reqwest = { version = "=0.12.23", features = ["json", "stream"] }
 serde = { version = "=1.0.219", features = ["derive"] }
 serde_json = "=1.0.142"
 tar = "=0.4.44"
