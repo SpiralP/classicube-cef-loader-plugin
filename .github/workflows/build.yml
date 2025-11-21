@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   linux_nix:
-    uses: SpiralP/github-reusable-workflows/.github/workflows/build.yml@d17a0d34b716f8bb55388900b93bf792d846227a # main
+    uses: SpiralP/github-reusable-workflows/.github/workflows/build.yml@a2b545525e24754e0572ceae1e8b117effb285b7 # main
 
   windows_x86:
     name: Build Windows ${{ matrix.config.arch }}
@@ -32,7 +32,7 @@ jobs:
             target: i686-pc-windows-msvc
 
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: setup-msbuild
         uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
@@ -104,7 +104,7 @@ jobs:
             target: i686-unknown-linux-gnu
 
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Install x86_64 deps
         if: ${{ matrix.config.arch == 'x86_64' }}
@@ -176,7 +176,7 @@ jobs:
             target: aarch64-unknown-linux-gnu
 
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Install armhf deps
         if: ${{ matrix.config.arch == 'armhf' }}
@@ -241,7 +241,7 @@ jobs:
             target: x86_64-apple-darwin
 
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Install rust
         run: |
@@ -292,7 +292,7 @@ jobs:
             target: aarch64-apple-darwin
 
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Install rust
         run: |
