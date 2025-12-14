@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = "=1.0.100"
-async-compression = { version = "=0.4.34", features = ["bzip2", "tokio"] }
+async-compression = { version = "=0.4.35", features = ["bzip2", "tokio"] }
 async-dispatcher = { git = "https://github.com/SpiralP/rust-async-dispatcher.git", branch = "main" }
 backtrace = "=0.3.76"
 classicube-helpers = { git = "https://github.com/SpiralP/rust-classicube-helpers.git", branch = "main" }
