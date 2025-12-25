@@ -165,7 +165,7 @@ dependencies = [
 
 [[package]]
 name = "classicube-cef-loader-plugin"
-version = "2.1.42"
+version = "2.1.43"
 dependencies = [
  "anyhow",
  "async-compression",
