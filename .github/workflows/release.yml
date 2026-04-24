@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    branches: [master, main]
+    branches: [ master, main ]
   workflow_dispatch:
 
 concurrency:
@@ -13,11 +13,11 @@ permissions: {} # none, since we use a custom app
 
 jobs:
   release:
-    uses: SpiralP/github-reusable-workflows/.github/workflows/release.yml@575cd65e188a9f3afbea756c4651da5b95548e0f # main
+    uses: SpiralP/github-reusable-workflows/.github/workflows/release.yml@62705daa56c7f73e2d725dccec9ca8dd3bd2ffce # main
     with:
       replace-files: |
         Cargo.lock
         Cargo.toml
     secrets:
-      app-id: ${{ secrets.APP_ID }}
+      app-client-id: ${{ secrets.APP_CLIENT_ID }}
       app-private-key: ${{ secrets.APP_PRIVATE_KEY }}
