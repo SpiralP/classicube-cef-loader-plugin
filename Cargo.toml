@@ -29,6 +29,12 @@ tracing-subscriber = { version = "=0.3.23", features = ["env-filter"] }
 [target.'cfg(unix)'.dependencies]
 libc = "=0.2.186"
 
+[target.'cfg(windows)'.dependencies]
+windows = { version = "=0.62.2", features = [
+    "Win32_Foundation",
+    "Win32_System_LibraryLoader",
+] }
+
 
 [package.metadata.release]
 pre-release-commit-message = "Release {{version}}"

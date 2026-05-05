@@ -1,10 +1,13 @@
 pub mod cef_binary;
 pub mod github_release;
 
-use std::time::Duration;
+use std::{path::Path, time::Duration};
 
 use anyhow::Result;
-use github_release::GitHubReleaseChecker;
+use github_release::{AssetSpec, GitHubReleaseChecker};
+use tracing::warn;
+
+use crate::self_path::current_lib_path;
 
 pub const APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
@@ -106,18 +109,37 @@ pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_macos_aarch64.dylib";
 pub const CEF_EXE_PATH: &str = "cef/cef-macos-aarch64";
 
 pub async fn update_plugins() -> Result<()> {
-    let cef_loader_plugin_updated = GitHubReleaseChecker::create(
-        "CEF Loader Plugin",
-        "SpiralP",
-        "classicube-cef-loader-plugin",
-        vec![CEF_PLUGIN_LOADER_PATH.into()],
-    )
-    .await?
-    .update()
-    .await?;
+    // Self-update: rewrite whatever file ClassiCube actually `dlopen`ed for us,
+    // not a hard-coded path. That keeps a single loaded copy whether we live at
+    // `plugins/classicube_cef_loader_*.so` (manual install) or
+    // `plugins/managed/SpiralP-classicube-cef-loader-plugin-vX.Y.Z.so`
+    // (installed by classicube-plugin-updater-plugin). The asset name on the
+    // release is still the OS-suffixed canonical filename.
+    match current_lib_path() {
+        Ok(dest_path) => {
+            let asset_name = Path::new(CEF_PLUGIN_LOADER_PATH)
+                .file_name()
+                .and_then(|n| n.to_str())
+                .expect("CEF_PLUGIN_LOADER_PATH must have a UTF-8 file name")
+                .to_string();
 
-    if cef_loader_plugin_updated {
-        // TODO should we break if cef loader plugin updated?
+            let cef_loader_plugin_updated = GitHubReleaseChecker::create(
+                "CEF Loader Plugin",
+                "SpiralP",
+                "classicube-cef-loader-plugin",
+                vec![AssetSpec::new(asset_name, dest_path)],
+            )
+            .await?
+            .update()
+            .await?;
+
+            if cef_loader_plugin_updated {
+                // TODO should we break if cef loader plugin updated?
+            }
+        }
+        Err(e) => {
+            warn!("skipping CEF Loader Plugin self-update: {:#}", e);
+        }
     }
 
     let cef_plugin_release = GitHubReleaseChecker::create(

@@ -15,9 +15,67 @@ use crate::{print_async, updater::make_client};
 
 const VERSIONS_DIR_PATH: &str = "cef";
 
+fn sibling_with_suffix(path: &Path, suffix: &str) -> PathBuf {
+    let parent = path.parent().unwrap_or_else(|| Path::new(""));
+    let file_name = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .expect("dest_path must have a UTF-8 file name");
+    parent.join(format!("{}{}", file_name, suffix))
+}
+
+fn old_path_for(path: &Path) -> PathBuf {
+    sibling_with_suffix(path, "-old")
+}
+
+fn new_path_for(path: &Path) -> PathBuf {
+    sibling_with_suffix(path, "-new")
+}
+
 #[derive(Debug, Deserialize)]
 struct GitHubError {
     message: String,
+}
+
+/// Pairs the name of an asset on the GitHub release with the path on disk
+/// where it should be written. The two used to be conflated (a single
+/// `PathBuf` whose `file_name()` doubled as the asset name and whose `parent()`
+/// was the install directory), but for the loader's own self-update we want to
+/// rewrite whatever file ClassiCube actually `dlopen`ed - which may have a
+/// different filename than the GitHub asset (e.g. plugin-updater installs us
+/// at `plugins/managed/SpiralP-classicube-cef-loader-plugin-v2.1.75.so`).
+pub struct AssetSpec {
+    pub asset_name: String,
+    pub dest_path: PathBuf,
+}
+
+impl AssetSpec {
+    pub fn new(asset_name: impl Into<String>, dest_path: impl Into<PathBuf>) -> Self {
+        Self {
+            asset_name: asset_name.into(),
+            dest_path: dest_path.into(),
+        }
+    }
+}
+
+impl From<PathBuf> for AssetSpec {
+    fn from(dest_path: PathBuf) -> Self {
+        let asset_name = dest_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .expect("dest_path must have a UTF-8 file name")
+            .to_string();
+        Self {
+            asset_name,
+            dest_path,
+        }
+    }
+}
+
+impl From<&str> for AssetSpec {
+    fn from(dest_path: &str) -> Self {
+        PathBuf::from(dest_path).into()
+    }
 }
 
 pub struct GitHubReleaseChecker {
@@ -25,16 +83,16 @@ pub struct GitHubReleaseChecker {
     #[allow(dead_code)]
     owner: String,
     repo: String,
-    asset_paths: Vec<PathBuf>,
+    asset_specs: Vec<AssetSpec>,
     release: GitHubRelease,
 }
 
 impl GitHubReleaseChecker {
-    pub async fn create<S: Into<String>, P: Into<Vec<PathBuf>>>(
+    pub async fn create<S: Into<String>, P: Into<Vec<AssetSpec>>>(
         name: S,
         owner: S,
         repo: S,
-        asset_paths: P,
+        asset_specs: P,
     ) -> Result<Self> {
         let owner: String = owner.into();
         let repo: String = repo.into();
@@ -44,7 +102,7 @@ impl GitHubReleaseChecker {
             name: name.into(),
             owner,
             repo,
-            asset_paths: asset_paths.into(),
+            asset_specs: asset_specs.into(),
             release,
         })
     }
@@ -87,12 +145,9 @@ impl GitHubReleaseChecker {
         // delete "-old" files
         // and check if we are missing any assets
         let mut missing_asset = false;
-        for asset_path in &self.asset_paths {
-            let asset_name = asset_path.file_name().unwrap().to_str().unwrap();
-
-            let parent = asset_path.parent().unwrap();
-            let wanted_path = Path::new(&parent).join(asset_name);
-            let old_path = Path::new(&parent).join(format!("{}-old", &asset_name));
+        for spec in &self.asset_specs {
+            let wanted_path = &spec.dest_path;
+            let old_path = old_path_for(wanted_path);
 
             if let Err(e) = fs::remove_file(&old_path).await {
                 // don't show error
@@ -143,14 +198,12 @@ impl GitHubReleaseChecker {
     }
 
     async fn update_assets(&self, release: &GitHubRelease) -> Result<()> {
-        for asset_path in &self.asset_paths {
-            let asset_name = asset_path.file_name().unwrap().to_str().unwrap();
-
+        for spec in &self.asset_specs {
             let asset = release
                 .assets
                 .iter()
-                .find(|asset| asset.name == asset_name)
-                .with_context(|| format!("couldn't find asset {}", asset_name))?;
+                .find(|asset| asset.name == spec.asset_name)
+                .with_context(|| format!("couldn't find asset {}", spec.asset_name))?;
 
             print_async(format!(
                 "{}Downloading {}{} {}({}{}MB{})",
@@ -166,10 +219,9 @@ impl GitHubReleaseChecker {
             ))
             .await;
 
-            let parent = asset_path.parent().unwrap();
-            let wanted_path = Path::new(&parent).join(asset_name);
-            let new_path = Path::new(&parent).join(format!("{}-new", &asset_name));
-            let old_path = Path::new(&parent).join(format!("{}-old", &asset_name));
+            let wanted_path = spec.dest_path.clone();
+            let new_path = new_path_for(&wanted_path);
+            let old_path = old_path_for(&wanted_path);
             {
                 let mut f = fs::File::create(&new_path).await?;
 

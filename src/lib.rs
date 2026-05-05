@@ -1,6 +1,7 @@
 mod loader;
 mod logger;
 mod panic;
+mod self_path;
 mod updater;
 
 use std::{cell::Cell, ffi::CString, fs, os::raw::c_int, ptr};
