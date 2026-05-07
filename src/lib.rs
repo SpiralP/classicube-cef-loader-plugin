@@ -70,16 +70,16 @@ extern "C" fn on_new_map_loaded() {
 
         async_manager::spawn(async move {
             // don't update if debug build
-            if cfg!(not(debug_assertions)) {
-                if let Err(e) = updater::update_plugins().await {
-                    error!("{:#?}", e);
-                    print_async(format!(
-                        "{}Failed to update CEF: {}{e}",
-                        classicube_helpers::color::RED,
-                        classicube_helpers::color::WHITE
-                    ))
-                    .await;
-                }
+            if cfg!(not(debug_assertions))
+                && let Err(e) = updater::update_plugins().await
+            {
+                error!("{:#?}", e);
+                print_async(format!(
+                    "{}Failed to update CEF: {}{e}",
+                    classicube_helpers::color::RED,
+                    classicube_helpers::color::WHITE
+                ))
+                .await;
             }
 
             async_manager::spawn_on_main_thread(async move {
@@ -91,12 +91,10 @@ extern "C" fn on_new_map_loaded() {
     }
 }
 
-#[allow(non_upper_case_globals)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub static Plugin_ApiVersion: c_int = 1;
 
-#[allow(non_upper_case_globals)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub static mut Plugin_Component: IGameComponent = IGameComponent {
     // Called when the game is being loaded.
     Init: Some(init),

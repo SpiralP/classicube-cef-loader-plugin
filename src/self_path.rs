@@ -3,7 +3,7 @@ mod tests;
 
 use std::path::PathBuf;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 /// Resolve the on-disk path of the shared library (or test binary) that
 /// contains this function. Used by the self-update path to locate the loaded
@@ -40,14 +40,15 @@ pub fn current_lib_path() -> Result<PathBuf> {
     };
 
     use windows::{
-        core::PCWSTR,
         Win32::{
             Foundation::HMODULE,
             System::LibraryLoader::{
-                GetModuleFileNameW, GetModuleHandleExW, GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-                GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, GetModuleFileNameW,
+                GetModuleHandleExW,
             },
         },
+        core::PCWSTR,
     };
 
     let mut module = HMODULE::default();
