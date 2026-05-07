@@ -10,7 +10,7 @@ use std::{
     time::Duration,
 };
 
-use anyhow::{bail, Error, Result};
+use anyhow::{bail, Context, Error, Result};
 use classicube_helpers::color;
 use futures::{
     stream::{StreamExt, TryStreamExt},
@@ -93,23 +93,40 @@ pub async fn update(cef_binary_version: &str) -> Result<bool> {
         .await;
 
         if Path::new(CEF_BINARY_PATH_NEW).is_dir() {
-            fs::remove_dir_all(CEF_BINARY_PATH_NEW).await?;
+            debug!("cleaning previous {CEF_BINARY_PATH_NEW}");
+            fs::remove_dir_all(CEF_BINARY_PATH_NEW)
+                .await
+                .with_context(|| format!("remove_dir_all {CEF_BINARY_PATH_NEW}"))?;
         }
-        fs::create_dir_all(CEF_BINARY_PATH_NEW).await?;
-        download(cef_binary_version).await?;
+        debug!("creating {CEF_BINARY_PATH_NEW}");
+        fs::create_dir_all(CEF_BINARY_PATH_NEW)
+            .await
+            .with_context(|| format!("create_dir_all {CEF_BINARY_PATH_NEW}"))?;
 
-        // remove old cef binary caches
-        if Path::new(CEF_CACHE_PATH).is_dir() {
-            fs::remove_dir_all(CEF_CACHE_PATH).await?;
-        }
+        debug!("starting download + extract for {cef_binary_version}");
+        download(cef_binary_version).await?;
+        debug!("download + extract finished");
 
         {
             // mark as updated
-            let mut f = File::create(CEF_BINARY_VERSION_PATH).await?;
-            f.write_all(cef_binary_version.as_bytes()).await?;
+            debug!("writing version marker to {CEF_BINARY_VERSION_PATH}");
+            let mut f = File::create(CEF_BINARY_VERSION_PATH)
+                .await
+                .with_context(|| format!("create {CEF_BINARY_VERSION_PATH}"))?;
+            f.write_all(cef_binary_version.as_bytes())
+                .await
+                .with_context(|| format!("write {CEF_BINARY_VERSION_PATH}"))?;
         }
 
         print_async(format!("{}CEF Binary finished downloading", color::LIME)).await;
+
+        // remove old cef binary caches
+        if Path::new(CEF_CACHE_PATH).is_dir() {
+            debug!("removing old cache {CEF_CACHE_PATH}");
+            fs::remove_dir_all(CEF_CACHE_PATH)
+                .await
+                .with_context(|| format!("remove_dir_all {CEF_CACHE_PATH}"))?;
+        }
 
         Ok(true)
     } else {
@@ -264,8 +281,10 @@ async fn download(cef_binary_version: &str) -> Result<()> {
                     let out_path = Path::new(CEF_BINARY_PATH_NEW).join(first_part);
                     debug!("{:?} {:?}", path, out_path);
 
-                    std::fs::create_dir_all(out_path.parent().unwrap())?;
-                    file.unpack(&out_path)?;
+                    std::fs::create_dir_all(out_path.parent().unwrap())
+                        .with_context(|| format!("create_dir_all {:?}", out_path.parent()))?;
+                    file.unpack(&out_path)
+                        .with_context(|| format!("unpack {:?}", out_path))?;
                     continue;
                 }
 
@@ -282,8 +301,11 @@ async fn download(cef_binary_version: &str) -> Result<()> {
                             let out_path = Path::new(CEF_BINARY_PATH_NEW).join(even_more_trimmed);
                             debug!("{:?} {:?}", path, out_path);
 
-                            std::fs::create_dir_all(out_path.parent().unwrap())?;
-                            file.unpack(&out_path)?;
+                            std::fs::create_dir_all(out_path.parent().unwrap()).with_context(
+                                || format!("create_dir_all {:?}", out_path.parent()),
+                            )?;
+                            file.unpack(&out_path)
+                                .with_context(|| format!("unpack {:?}", out_path))?;
 
                             if ext == "so" {
                                 debug!("stripping {:?}", out_path);
@@ -317,8 +339,11 @@ async fn download(cef_binary_version: &str) -> Result<()> {
                                     Path::new(CEF_BINARY_PATH_NEW).join(&even_more_trimmed);
                                 debug!("{:?} {:?}", path, out_path);
 
-                                std::fs::create_dir_all(&out_path.parent().unwrap())?;
-                                file.unpack(&out_path)?;
+                                std::fs::create_dir_all(&out_path.parent().unwrap()).with_context(
+                                    || format!("create_dir_all {:?}", out_path.parent()),
+                                )?;
+                                file.unpack(&out_path)
+                                    .with_context(|| format!("unpack {:?}", out_path))?;
                             }
                         }
                     }
@@ -331,9 +356,16 @@ async fn download(cef_binary_version: &str) -> Result<()> {
     .await??;
 
     if Path::new(CEF_BINARY_PATH).is_dir() {
-        fs::remove_dir_all(CEF_BINARY_PATH).await?;
+        debug!("removing existing {CEF_BINARY_PATH} before rename");
+        fs::remove_dir_all(CEF_BINARY_PATH)
+            .await
+            .with_context(|| format!("remove_dir_all {CEF_BINARY_PATH}"))?;
     }
-    fs::rename(CEF_BINARY_PATH_NEW, CEF_BINARY_PATH).await?;
+
+    debug!("rename {CEF_BINARY_PATH_NEW} -> {CEF_BINARY_PATH}");
+    fs::rename(CEF_BINARY_PATH_NEW, CEF_BINARY_PATH)
+        .await
+        .with_context(|| format!("rename {CEF_BINARY_PATH_NEW} -> {CEF_BINARY_PATH}"))?;
 
     running.store(false, Ordering::SeqCst);
 
