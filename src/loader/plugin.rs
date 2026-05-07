@@ -1,10 +1,10 @@
 use std::{cell::Cell, env, ffi::CString, fs, os::raw::c_void, path::Path};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use classicube_helpers::time;
 use classicube_sys::{DynamicLib_Get2, DynamicLib_Load2, IGameComponent, OwnedString};
 
-use crate::updater::{cef_binary::CEF_BINARY_PATH, CEF_EXE_PATH, CEF_PLUGIN_PATH};
+use crate::updater::{CEF_EXE_PATH, CEF_PLUGIN_PATH, cef_binary::CEF_BINARY_PATH};
 
 thread_local!(
     static LIBRARY: Cell<Option<*mut c_void>> = const { Cell::new(None) };
@@ -67,7 +67,9 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         // add cef/cef_binary and cef/ to PATH so that cef.dll is found,
         // and cef.exe can run
         let path = env::var("PATH").unwrap_or_default();
-        env::set_var("PATH", format!("{};{};{}", path, CEF_BINARY_PATH, "cef"));
+        unsafe {
+            env::set_var("PATH", format!("{};{};{}", path, CEF_BINARY_PATH, "cef"));
+        }
     }
 
     #[cfg(target_os = "linux")]
@@ -86,22 +88,24 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         fs::copy(CEF_EXE_PATH, new_exe_path).context("couldn't copy cef exe")?;
 
         // add cef/cef_binary to LD_LIBRARY_PATH so that libcef.so is found
-        if let Ok(ld_library_path) = env::var("LD_LIBRARY_PATH") {
-            env::set_var(
-                "LD_LIBRARY_PATH",
-                format!("{}:{}", ld_library_path, CEF_BINARY_PATH),
-            );
-        } else {
-            env::set_var("LD_LIBRARY_PATH", CEF_BINARY_PATH);
+        unsafe {
+            if let Ok(ld_library_path) = env::var("LD_LIBRARY_PATH") {
+                env::set_var(
+                    "LD_LIBRARY_PATH",
+                    format!("{}:{}", ld_library_path, CEF_BINARY_PATH),
+                );
+            } else {
+                env::set_var("LD_LIBRARY_PATH", CEF_BINARY_PATH);
+            }
+
+            // add ./cef/ to path so that we can run "cef"
+            let path = env::var("PATH").unwrap_or_default();
+            env::set_var("PATH", format!("{}:{}", path, "cef"));
+
+            // fix linux keyboard language layout mapping
+            // on finnish keyboard: US [ is typed as ¥, but is suppose to be å
+            env::set_var("LC_CTYPE", "C");
         }
-
-        // add ./cef/ to path so that we can run "cef"
-        let path = env::var("PATH").unwrap_or_default();
-        env::set_var("PATH", format!("{}:{}", path, "cef"));
-
-        // fix linux keyboard language layout mapping
-        // on finnish keyboard: US [ is typed as ¥, but is suppose to be å
-        env::set_var("LC_CTYPE", "C");
     }
 
     #[cfg(target_os = "macos")]
@@ -154,13 +158,15 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         // dlopen(/cc/cef/cef.app/Contents/MacOS/libGLESv2.dylib, 0x0001):
         // tried: '/cc/cef/cef.app/Contents/MacOS/libGLESv2.dylib' (no such file)
         let libraries_path = format!("{}/Libraries", CEF_BINARY_PATH);
-        if let Ok(dyld_library_path) = env::var("DYLD_LIBRARY_PATH") {
-            env::set_var(
-                "DYLD_LIBRARY_PATH",
-                format!("{}:{}", dyld_library_path, libraries_path),
-            );
-        } else {
-            env::set_var("DYLD_LIBRARY_PATH", format!("{}", libraries_path));
+        unsafe {
+            if let Ok(dyld_library_path) = env::var("DYLD_LIBRARY_PATH") {
+                env::set_var(
+                    "DYLD_LIBRARY_PATH",
+                    format!("{}:{}", dyld_library_path, libraries_path),
+                );
+            } else {
+                env::set_var("DYLD_LIBRARY_PATH", format!("{}", libraries_path));
+            }
         }
     }
 

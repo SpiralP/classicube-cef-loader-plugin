@@ -4,17 +4,17 @@ use std::{
     path::{Component, Path, PathBuf},
     pin::Pin,
     sync::{
-        atomic::{AtomicBool, AtomicUsize, Ordering},
         Arc,
+        atomic::{AtomicBool, AtomicUsize, Ordering},
     },
     time::Duration,
 };
 
-use anyhow::{bail, Context, Error, Result};
+use anyhow::{Context, Error, Result, bail};
 use classicube_helpers::color;
 use futures::{
-    stream::{StreamExt, TryStreamExt},
     Stream,
+    stream::{StreamExt, TryStreamExt},
 };
 use tokio::{
     fs::{self, File},
@@ -291,37 +291,34 @@ async fn download(cef_binary_version: &str) -> Result<()> {
                 // windows/linux extract files to cef/cef_binary/
                 #[cfg(not(target_os = "macos"))]
                 {
-                    if let Some(ext) = trimmed_path.extension() {
-                        if (first_part == "Release"
+                    if let Some(ext) = trimmed_path.extension()
+                        && ((first_part == "Release"
                             && (ext == "dll" || ext == "bin" || ext == "so"))
-                            || (first_part == "Resources" && (ext == "pak" || ext == "dat"))
-                        {
-                            let even_more_trimmed: PathBuf = trimmed_path_components.collect();
-                            // icu .dat and .bin files must be next to cef.dll
-                            let out_path = Path::new(CEF_BINARY_PATH_NEW).join(even_more_trimmed);
-                            debug!("{:?} {:?}", path, out_path);
+                            || (first_part == "Resources" && (ext == "pak" || ext == "dat")))
+                    {
+                        let even_more_trimmed: PathBuf = trimmed_path_components.collect();
+                        // icu .dat and .bin files must be next to cef.dll
+                        let out_path = Path::new(CEF_BINARY_PATH_NEW).join(even_more_trimmed);
+                        debug!("{:?} {:?}", path, out_path);
 
-                            std::fs::create_dir_all(out_path.parent().unwrap()).with_context(
-                                || format!("create_dir_all {:?}", out_path.parent()),
-                            )?;
-                            file.unpack(&out_path)
-                                .with_context(|| format!("unpack {:?}", out_path))?;
+                        std::fs::create_dir_all(out_path.parent().unwrap())
+                            .with_context(|| format!("create_dir_all {:?}", out_path.parent()))?;
+                        file.unpack(&out_path)
+                            .with_context(|| format!("unpack {:?}", out_path))?;
 
-                            if ext == "so" {
-                                debug!("stripping {:?}", out_path);
-                                if let Ok(output) =
-                                    std::process::Command::new("strip").arg(&out_path).output()
-                                {
-                                    if !output.status.success() {
-                                        error!(
-                                            "strip {:?}\n--- stdout\n{}\n--- stderr\n{}",
-                                            out_path,
-                                            String::from_utf8_lossy(&output.stdout),
-                                            String::from_utf8_lossy(&output.stderr)
-                                        );
-                                        bail!("couldn't strip {:?}", out_path);
-                                    }
-                                }
+                        if ext == "so" {
+                            debug!("stripping {:?}", out_path);
+                            if let Ok(output) =
+                                std::process::Command::new("strip").arg(&out_path).output()
+                                && !output.status.success()
+                            {
+                                error!(
+                                    "strip {:?}\n--- stdout\n{}\n--- stderr\n{}",
+                                    out_path,
+                                    String::from_utf8_lossy(&output.stdout),
+                                    String::from_utf8_lossy(&output.stderr)
+                                );
+                                bail!("couldn't strip {:?}", out_path);
                             }
                         }
                     }
@@ -380,7 +377,7 @@ async fn download(cef_binary_version: &str) -> Result<()> {
 macro_rules! test_noop {
     ($name:tt) => {
         #[cfg(test)]
-        #[no_mangle]
+        #[unsafe(no_mangle)]
         pub extern "C" fn $name() {}
     };
 }
@@ -398,9 +395,11 @@ fn test_update() {
     std::fs::create_dir_all("cef").unwrap();
     crate::async_manager::block_on_local(async {
         crate::async_manager::spawn(async {
-            assert!(update("134.3.8+gfe66d80+chromium-134.0.6998.166")
-                .await
-                .unwrap());
+            assert!(
+                update("134.3.8+gfe66d80+chromium-134.0.6998.166")
+                    .await
+                    .unwrap()
+            );
         })
         .await
         .unwrap();
