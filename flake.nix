@@ -49,6 +49,8 @@
             buildInputs = with pkgs; [
               openssl
             ];
+
+            useNextest = true;
           };
         }
       );

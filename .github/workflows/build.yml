@@ -1,11 +1,9 @@
-name: Build
+name: build
 
 on:
   pull_request:
-    branches: [master, main]
-  push:
-    branches: ["*"]
-    tags: ["*"]
+    branches: [main, master, alpha, beta]
+  workflow_call:
   workflow_dispatch:
 
 concurrency:
@@ -13,321 +11,78 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write # for uploading release artifacts
+  contents: read # for checkout
+  id-token: write # OIDC token for Sigstore signing
+  attestations: write # persist build-provenance attestations
 
 jobs:
   linux_nix:
-    uses: SpiralP/github-reusable-workflows/.github/workflows/build.yml@d92f046d6712c5dc69ba8e779dbf7d60ccc249b3 # main
+    uses: SpiralP/github-reusable-workflows/.github/workflows/build.yml@4b41639a9fc865b20a6a32e51b70555a54759db0 # main
 
-  windows_x86:
+  windows:
     name: Build Windows ${{ matrix.config.arch }}
     runs-on: windows-2025
     strategy:
       fail-fast: false
       matrix:
         config:
-          - arch: x86_64
-            target: x86_64-pc-windows-msvc
-          - arch: i686
-            target: i686-pc-windows-msvc
-
+          - { arch: x86_64, target: x86_64-pc-windows-msvc }
+          - { arch: i686, target: i686-pc-windows-msvc }
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: setup-msbuild
-        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
-
-      - name: Install rust
-        run: |
-          rustup default stable
-          rustup component add rustfmt
-          rustup target add ${{ matrix.config.target }}
-
-      - name: Build
-        if: ${{ startsWith(github.ref, 'refs/tags/') != true }}
-        run: |
-          cargo build --target ${{ matrix.config.target }}
-
-      - name: Test
-        if: ${{ startsWith(github.ref, 'refs/tags/') != true }}
-        run: |
-          cargo test --target ${{ matrix.config.target }} -- --nocapture --test-threads 1
-
-      - name: Build Release
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        run: |
-          cargo build --target ${{ matrix.config.target }} --release
-
-      - name: Rename files
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        run: |
-          Move-Item `
-            -Path 'target\${{ matrix.config.target }}\release\classicube_cef_loader_plugin.dll' `
-            -Destination '.\classicube_cef_loader_windows_${{ matrix.config.arch }}.dll'
-
-      - name: VirusTotal Scan
-        uses: crazy-max/ghaction-virustotal@d34968c958ae283fe976efed637081b9f9dcf74f # v4.2.0
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      - uses: SpiralP/github-reusable-workflows/.github/actions/build-classicube-plugin@4b41639a9fc865b20a6a32e51b70555a54759db0 # main
         with:
-          vt_api_key: ${{ secrets.VT_API_KEY }}
-          files: |
-            classicube_cef_loader_windows_${{ matrix.config.arch }}.dll
+          arch: ${{ matrix.config.arch }}
+          target: ${{ matrix.config.target }}
 
-      - name: Upload Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.config.arch == 'x86_64' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: |
-            classicube_cef_loader_windows_${{ matrix.config.arch }}.dll
-
-      - name: Upload Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.config.arch != 'x86_64' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: |
-            classicube_cef_loader_windows_${{ matrix.config.arch }}.dll
-
-  linux_x86:
+  linux:
     name: Build Linux ${{ matrix.config.arch }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         config:
-          - arch: x86_64
-            target: x86_64-unknown-linux-gnu
-          - arch: i686
-            target: i686-unknown-linux-gnu
+          - { arch: x86_64, target: x86_64-unknown-linux-gnu }
+          - { arch: aarch64, target: aarch64-unknown-linux-gnu }
+          - { arch: i686, target: i686-unknown-linux-gnu }
+          - { arch: armhf, target: armv7-unknown-linux-gnueabihf }
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
       - name: Install x86_64 deps
         if: ${{ matrix.config.arch == 'x86_64' }}
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install rustup git gcc g++ build-essential cmake clang pkg-config \
-            libssl-dev \
-            libssl3
+          sudo apt-get -y install pkg-config libssl-dev libssl3
 
       - name: Install i686 deps
         if: ${{ matrix.config.arch == 'i686' }}
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get -y update
-          sudo apt-get -y install rustup git gcc g++ build-essential cmake clang pkg-config:i386 \
+          sudo apt-get -y install pkg-config:i386 \
             gcc-multilib g++-multilib \
             libssl-dev:i386 \
             libssl3:i386
           echo "PKG_CONFIG_ALLOW_CROSS=1" >> "$GITHUB_ENV"
-
-      - name: Install rust
-        run: |
-          rustup default stable
-          rustup component add rustfmt
-          rustup target add ${{ matrix.config.target }}
-
-      - name: Build
-        if: ${{ startsWith(github.ref, 'refs/tags/') != true }}
-        run: |
-          cargo build --target ${{ matrix.config.target }}
-          file 'target/${{ matrix.config.target }}/debug/libclassicube_cef_loader_plugin.so'
-
-      - name: Test
-        if: ${{ startsWith(github.ref, 'refs/tags/') != true }}
-        run: |
-          cargo test --target ${{ matrix.config.target }} -- --nocapture --test-threads 1
-
-      - name: Build Release
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        run: |
-          cargo build --target ${{ matrix.config.target }} --release
-          file 'target/${{ matrix.config.target }}/release/libclassicube_cef_loader_plugin.so'
-
-      - name: Rename files
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        run: |
-          mv 'target/${{ matrix.config.target }}/release/libclassicube_cef_loader_plugin.so' \
-            './classicube_cef_loader_linux_${{ matrix.config.arch }}.so'
-
-      - name: Upload Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: SpiralP/github-reusable-workflows/.github/actions/build-classicube-plugin@4b41639a9fc865b20a6a32e51b70555a54759db0 # main
         with:
-          files: |
-            classicube_cef_loader_linux_${{ matrix.config.arch }}.so
+          arch: ${{ matrix.config.arch }}
+          target: ${{ matrix.config.target }}
+          use-cross: ${{ matrix.config.arch == 'aarch64' || matrix.config.arch == 'armhf' }}
 
-  linux_arm:
-    name: Build Linux ${{ matrix.config.arch }}
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          - arch: armhf
-            target: armv7-unknown-linux-gnueabihf
-          - arch: aarch64
-            target: aarch64-unknown-linux-gnu
-
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Install armhf deps
-        if: ${{ matrix.config.arch == 'armhf' }}
-        run: |
-          docker build --pull -t cross-armhf -f .github/cross-armhf.Dockerfile .
-
-      - name: Install aarch64 deps
-        if: ${{ matrix.config.arch == 'aarch64' }}
-        run: |
-          docker build --pull -t cross-aarch64 -f .github/cross-aarch64.Dockerfile .
-
-      - name: Install rust
-        run: |
-          rustup default stable
-          rustup component add rustfmt
-          rustup target add ${{ matrix.config.target }}
-
-      - name: Install cross
-        run: |
-          cargo install cross
-
-      - name: Build
-        if: ${{ startsWith(github.ref, 'refs/tags/') != true }}
-        run: |
-          cross build --target ${{ matrix.config.target }}
-          file 'target/${{ matrix.config.target }}/debug/libclassicube_cef_loader_plugin.so'
-
-      - name: Test
-        if: ${{ startsWith(github.ref, 'refs/tags/') != true }}
-        run: |
-          cross test --target ${{ matrix.config.target }} -- --nocapture --test-threads 1
-
-      - name: Build Release
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        run: |
-          cross build --target ${{ matrix.config.target }} --release
-          file 'target/${{ matrix.config.target }}/release/libclassicube_cef_loader_plugin.so'
-
-      - name: Rename files
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        run: |
-          mv 'target/${{ matrix.config.target }}/release/libclassicube_cef_loader_plugin.so' \
-            './classicube_cef_loader_linux_${{ matrix.config.arch }}.so'
-
-      - name: Upload Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: |
-            classicube_cef_loader_linux_${{ matrix.config.arch }}.so
-
-  mac_x86:
+  mac:
     name: Build MacOS ${{ matrix.config.arch }}
     runs-on: macos-15
     strategy:
       fail-fast: false
       matrix:
         config:
-          - arch: x86_64
-            target: x86_64-apple-darwin
-
+          - { arch: aarch64, target: aarch64-apple-darwin }
+          - { arch: x86_64, target: x86_64-apple-darwin }
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Install rust
-        run: |
-          rustup default stable
-          rustup component add rustfmt
-          rustup target add ${{ matrix.config.target }}
-
-      - name: Build
-        if: ${{ startsWith(github.ref, 'refs/tags/') != true }}
-        run: |
-          cargo build --target ${{ matrix.config.target }}
-          file 'target/${{ matrix.config.target }}/debug/libclassicube_cef_loader_plugin.dylib'
-
-      - name: Test
-        if: ${{ startsWith(github.ref, 'refs/tags/') != true }}
-        run: |
-          cargo test --target ${{ matrix.config.target }} -- --nocapture --test-threads 1
-
-      - name: Build Release
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        run: |
-          cargo build --target ${{ matrix.config.target }} --release
-          file 'target/${{ matrix.config.target }}/release/libclassicube_cef_loader_plugin.dylib'
-
-      - name: Rename files
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        run: |
-          mv 'target/${{ matrix.config.target }}/release/libclassicube_cef_loader_plugin.dylib' \
-            'classicube_cef_loader_macos_${{ matrix.config.arch }}.dylib'
-
-      - name: Upload Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: SpiralP/github-reusable-workflows/.github/actions/build-classicube-plugin@4b41639a9fc865b20a6a32e51b70555a54759db0 # main
         with:
-          files: |
-            classicube_cef_loader_macos_${{ matrix.config.arch }}.dylib
-
-  mac_arm:
-    name: Build MacOS ${{ matrix.config.arch }}
-    runs-on: macos-15
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          - arch: aarch64
-            target: aarch64-apple-darwin
-
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Install rust
-        run: |
-          rustup default stable
-          rustup component add rustfmt
-          rustup target add ${{ matrix.config.target }}
-
-      - name: Build
-        if: ${{ startsWith(github.ref, 'refs/tags/') != true }}
-        run: |
-          cargo build --target ${{ matrix.config.target }}
-          file 'target/${{ matrix.config.target }}/debug/libclassicube_cef_loader_plugin.dylib'
-
-      - name: Test
-        if: ${{ startsWith(github.ref, 'refs/tags/') != true }}
-        run: |
-          cargo test --target ${{ matrix.config.target }} -- --nocapture --test-threads 1
-
-      - name: Build Release
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        run: |
-          cargo build --target ${{ matrix.config.target }} --release
-          file 'target/${{ matrix.config.target }}/release/libclassicube_cef_loader_plugin.dylib'
-
-      - name: Rename files
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        run: |
-          mv 'target/${{ matrix.config.target }}/release/libclassicube_cef_loader_plugin.dylib' \
-            'classicube_cef_loader_macos_${{ matrix.config.arch }}.dylib'
-
-      - name: Upload Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: |
-            classicube_cef_loader_macos_${{ matrix.config.arch }}.dylib
+          arch: ${{ matrix.config.arch }}
+          target: ${{ matrix.config.target }}
