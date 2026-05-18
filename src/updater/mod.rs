@@ -5,6 +5,7 @@ use std::{path::Path, time::Duration};
 
 use anyhow::Result;
 use github_release::{AssetSpec, GitHubReleaseChecker};
+use tokio::{fs, io};
 use tracing::warn;
 
 use crate::self_path::current_lib_path;
@@ -29,7 +30,10 @@ pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_windows_
 pub const CEF_PLUGIN_PATH: &str = "cef/classicube_cef_windows_x86_64.dll";
 
 #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
-pub const CEF_EXE_PATH: &str = "cef/cef-windows-x86_64.exe";
+pub const CEF_EXE_PATH: &str = "cef/cef_windows_x86_64.exe";
+
+#[cfg(all(target_os = "windows", target_arch = "x86_64"))]
+const LEGACY_CEF_EXE_PATH: &str = "cef/cef-windows-x86_64.exe";
 
 // windows 32 bit
 
@@ -40,7 +44,10 @@ pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_windows_
 pub const CEF_PLUGIN_PATH: &str = "cef/classicube_cef_windows_i686.dll";
 
 #[cfg(all(target_os = "windows", target_arch = "x86"))]
-pub const CEF_EXE_PATH: &str = "cef/cef-windows-i686.exe";
+pub const CEF_EXE_PATH: &str = "cef/cef_windows_i686.exe";
+
+#[cfg(all(target_os = "windows", target_arch = "x86"))]
+const LEGACY_CEF_EXE_PATH: &str = "cef/cef-windows-i686.exe";
 
 // linux 64 bit
 
@@ -51,7 +58,10 @@ pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_linux_x8
 pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_linux_x86_64.so";
 
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-pub const CEF_EXE_PATH: &str = "cef/cef-linux-x86_64";
+pub const CEF_EXE_PATH: &str = "cef/cef_linux_x86_64";
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+const LEGACY_CEF_EXE_PATH: &str = "cef/cef-linux-x86_64";
 
 // linux 32 bit
 
@@ -62,7 +72,10 @@ pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_linux_i6
 pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_linux_i686.so";
 
 #[cfg(all(target_os = "linux", target_arch = "x86"))]
-pub const CEF_EXE_PATH: &str = "cef/cef-linux-i686";
+pub const CEF_EXE_PATH: &str = "cef/cef_linux_i686";
+
+#[cfg(all(target_os = "linux", target_arch = "x86"))]
+const LEGACY_CEF_EXE_PATH: &str = "cef/cef-linux-i686";
 
 // linux armhf
 
@@ -73,7 +86,10 @@ pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_linux_ar
 pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_linux_armhf.so";
 
 #[cfg(all(target_os = "linux", target_arch = "arm"))]
-pub const CEF_EXE_PATH: &str = "cef/cef-linux-armhf";
+pub const CEF_EXE_PATH: &str = "cef/cef_linux_armhf";
+
+#[cfg(all(target_os = "linux", target_arch = "arm"))]
+const LEGACY_CEF_EXE_PATH: &str = "cef/cef-linux-armhf";
 
 // linux aarch64
 
@@ -84,7 +100,10 @@ pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_linux_aa
 pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_linux_aarch64.so";
 
 #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
-pub const CEF_EXE_PATH: &str = "cef/cef-linux-aarch64";
+pub const CEF_EXE_PATH: &str = "cef/cef_linux_aarch64";
+
+#[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+const LEGACY_CEF_EXE_PATH: &str = "cef/cef-linux-aarch64";
 
 // macos 64 bit
 
@@ -95,7 +114,10 @@ pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_macos_x8
 pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_macos_x86_64.dylib";
 
 #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
-pub const CEF_EXE_PATH: &str = "cef/cef-macos-x86_64";
+pub const CEF_EXE_PATH: &str = "cef/cef_macos_x86_64";
+
+#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+const LEGACY_CEF_EXE_PATH: &str = "cef/cef-macos-x86_64";
 
 // macos aarch64
 
@@ -106,7 +128,10 @@ pub const CEF_PLUGIN_LOADER_PATH: &str = "plugins/classicube_cef_loader_macos_aa
 pub const CEF_PLUGIN_PATH: &str = "./cef/classicube_cef_macos_aarch64.dylib";
 
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-pub const CEF_EXE_PATH: &str = "cef/cef-macos-aarch64";
+pub const CEF_EXE_PATH: &str = "cef/cef_macos_aarch64";
+
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+const LEGACY_CEF_EXE_PATH: &str = "cef/cef-macos-aarch64";
 
 pub async fn update_plugins() -> Result<()> {
     // Self-update: rewrite whatever file ClassiCube actually `dlopen`ed for us,
@@ -163,6 +188,13 @@ pub async fn update_plugins() -> Result<()> {
     };
 
     cef_plugin_release.update().await?;
+
+    // clean up the pre-rename `cef-<os>-<arch>` binary left by older installs
+    if let Err(e) = fs::remove_file(LEGACY_CEF_EXE_PATH).await
+        && e.kind() != io::ErrorKind::NotFound
+    {
+        warn!("couldn't remove legacy {LEGACY_CEF_EXE_PATH}: {e:#}");
+    }
 
     cef_binary::update(&cef_binary_version).await?;
 

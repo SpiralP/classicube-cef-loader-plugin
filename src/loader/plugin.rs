@@ -48,7 +48,7 @@ fn dll_get(library: *mut c_void, symbol_name: &str) -> Result<*mut c_void> {
 pub fn try_init() -> Result<*mut IGameComponent> {
     #[cfg(target_os = "windows")]
     {
-        // copy cef-windows-x86_64.exe to cef.exe
+        // copy cef_windows_x86_64.exe to cef.exe
         if let Err(e) = fs::copy(
             CEF_EXE_PATH,
             Path::new(CEF_EXE_PATH).parent().unwrap().join("cef.exe"),
@@ -83,7 +83,7 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         perms.set_mode(0o755);
         fs::set_permissions(CEF_EXE_PATH, perms)?;
 
-        // copy cef-linux-x86_64 to cef
+        // copy cef_linux_x86_64 to cef
         let new_exe_path = Path::new(CEF_EXE_PATH).parent().unwrap().join("cef");
         fs::copy(CEF_EXE_PATH, new_exe_path).context("couldn't copy cef exe")?;
 
