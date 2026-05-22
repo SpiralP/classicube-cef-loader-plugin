@@ -12,6 +12,11 @@ thread_local!(
 );
 
 pub fn init() {
+    if PLUGIN.with(|cell| cell.get().is_some()) {
+        debug!("inner plugin already loaded; skipping re-init");
+        return;
+    }
+
     match plugin::try_init() {
         Ok(plugin_component) => {
             PLUGIN.with(|cell| cell.set(Some(plugin_component)));
@@ -36,25 +41,6 @@ pub fn init() {
             ));
         }
     }
-}
-
-pub fn free() {
-    PLUGIN.with(|cell| {
-        if let Some(plugin_component) = cell.get() {
-            cell.set(None);
-
-            let plugin_component = unsafe { &mut *plugin_component };
-
-            if let Some(f) = plugin_component.Free {
-                debug!("Calling Free");
-                unsafe {
-                    f();
-                }
-            }
-        }
-    });
-
-    plugin::free();
 }
 
 pub fn reset() {

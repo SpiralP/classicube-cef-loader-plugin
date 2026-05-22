@@ -14,7 +14,8 @@ use classicube_sys::{
 use tracing::*;
 
 thread_local!(
-    static LOADED: Cell<bool> = const { Cell::new(false) };
+    static INIT_ONCE: Cell<bool> = const { Cell::new(false) };
+    static UPDATER_STARTED: Cell<bool> = const { Cell::new(false) };
 );
 
 extern "C" fn init() {
@@ -26,6 +27,11 @@ extern "C" fn init() {
         "Init {}",
         concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"))
     );
+
+    if INIT_ONCE.get() {
+        return;
+    }
+    INIT_ONCE.set(true);
 
     fs::create_dir_all("cef").unwrap();
 
@@ -42,10 +48,6 @@ extern "C" fn init() {
 
 extern "C" fn free() {
     debug!("Free");
-
-    loader::free();
-
-    async_manager::shutdown();
 }
 
 extern "C" fn reset() {
@@ -63,10 +65,10 @@ extern "C" fn on_new_map() {
 extern "C" fn on_new_map_loaded() {
     debug!("OnNewMapLoaded");
 
-    if LOADED.get() {
+    if UPDATER_STARTED.get() {
         loader::on_new_map_loaded();
     } else {
-        LOADED.set(true);
+        UPDATER_STARTED.set(true);
 
         async_manager::spawn(async move {
             // don't update if debug build

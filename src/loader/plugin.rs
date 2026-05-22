@@ -1,14 +1,10 @@
-use std::{cell::Cell, env, ffi::CString, fs, os::raw::c_void, path::Path};
+use std::{env, ffi::CString, fs, os::raw::c_void, path::Path};
 
 use anyhow::{Context, Result, bail};
 use classicube_helpers::time;
 use classicube_sys::{DynamicLib_Get2, DynamicLib_Load2, IGameComponent, OwnedString};
 
 use crate::updater::{CEF_EXE_PATH, CEF_PLUGIN_PATH, cef_binary::CEF_BINARY_PATH};
-
-thread_local!(
-    static LIBRARY: Cell<Option<*mut c_void>> = const { Cell::new(None) };
-);
 
 fn get_error() -> String {
     #[cfg(windows)]
@@ -174,18 +170,11 @@ pub fn try_init() -> Result<*mut IGameComponent> {
         tracing::debug!("dll_load {}", CEF_PLUGIN_PATH);
         dll_load(CEF_PLUGIN_PATH)?
     });
-    LIBRARY.with(|cell| cell.set(Some(library)));
 
     let plugin_component = dll_get(library, "Plugin_Component")?;
     let plugin_component = plugin_component as *mut IGameComponent;
 
     Ok(plugin_component)
-}
-
-pub fn free() {
-    LIBRARY.with(|cell| {
-        let _ = cell.take();
-    });
 }
 
 #[cfg(target_os = "macos")]
