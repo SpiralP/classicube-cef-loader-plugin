@@ -28,14 +28,11 @@ extern "C" fn init() {
         concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"))
     );
 
-    if INIT_ONCE.get() {
-        return;
-    }
-    INIT_ONCE.set(true);
+    if !INIT_ONCE.get() {
+        INIT_ONCE.set(true);
 
-    fs::create_dir_all("cef").unwrap();
+        fs::create_dir_all("cef").unwrap();
 
-    {
         let append_app_name = CString::new(" cef").unwrap();
         let c_str = append_app_name.as_ptr();
         unsafe {
@@ -48,6 +45,22 @@ extern "C" fn init() {
 
 extern "C" fn free() {
     debug!("Free");
+
+    // Forward Free to the inner plugin so it can release D3D9 GPU
+    // resources (OwnedGfxTexture / OwnedGfxVertexBuffer) before
+    // ClassiCube's Gfx_Free runs. Without this, the D3D9 device
+    // retains outstanding refs and d3d9.dll's DLL_PROCESS_DETACH
+    // hangs at process exit (OpenGL backend is unaffected).
+    //
+    // We deliberately do NOT dlclose the inner plugin: its chat
+    // command is pinned in ClassiCube's cmds_head linked list with
+    // no unregister API, so unloading the DLL would leave dangling
+    // function pointers. The inner plugin's commit 30d14e15 made
+    // its shutdown safe to call without a subsequent dlclose
+    // (VTABLE / message handler restore, command never dropped).
+    loader::free();
+
+    async_manager::shutdown();
 }
 
 extern "C" fn reset() {
