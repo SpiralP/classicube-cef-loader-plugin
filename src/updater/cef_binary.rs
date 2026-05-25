@@ -389,7 +389,7 @@ test_noop!(ScheduledTask_Add);
 #[test]
 #[ignore]
 fn test_update() {
-    crate::logger::initialize(true, false);
+    crate::logger::initialize();
     crate::async_manager::initialize();
 
     std::fs::create_dir_all("cef").unwrap();

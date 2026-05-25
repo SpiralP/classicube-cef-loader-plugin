@@ -21,7 +21,7 @@ thread_local!(
 extern "C" fn init() {
     panic::install_hook();
 
-    logger::initialize(true, false);
+    logger::initialize();
 
     debug!(
         "Init {}",
@@ -106,9 +106,11 @@ extern "C" fn on_new_map_loaded() {
     }
 }
 
+#[allow(non_upper_case_globals)]
 #[unsafe(no_mangle)]
 pub static Plugin_ApiVersion: c_int = 1;
 
+#[allow(non_upper_case_globals)]
 #[unsafe(no_mangle)]
 pub static mut Plugin_Component: IGameComponent = IGameComponent {
     // Called when the game is being loaded.
