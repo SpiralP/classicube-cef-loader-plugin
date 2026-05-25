@@ -21,7 +21,7 @@ jobs:
     # `build` job already validated nix against this commit minutes earlier,
     # and the nix output isn't attached to the GitHub release.
     if: ${{ github.event_name != 'workflow_dispatch' }}
-    uses: SpiralP/github-reusable-workflows/.github/workflows/build.yml@78cca1708ee40ff0f5cab7b971204653ddefcca0 # main
+    uses: SpiralP/github-reusable-workflows/.github/workflows/build.yml@14f3ff0a30de650ab794eecf41a03f1f9d702822 # main
 
   windows:
     name: Build Windows ${{ matrix.config.arch }}
@@ -34,7 +34,7 @@ jobs:
           - { arch: i686, target: i686-pc-windows-msvc }
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: SpiralP/github-reusable-workflows/.github/actions/build-classicube-plugin@78cca1708ee40ff0f5cab7b971204653ddefcca0 # main
+      - uses: SpiralP/github-reusable-workflows/.github/actions/build-classicube-plugin@14f3ff0a30de650ab794eecf41a03f1f9d702822 # main
         with:
           arch: ${{ matrix.config.arch }}
           target: ${{ matrix.config.target }}
@@ -69,7 +69,7 @@ jobs:
             libssl-dev:i386 \
             libssl3:i386
           echo "PKG_CONFIG_ALLOW_CROSS=1" >> "$GITHUB_ENV"
-      - uses: SpiralP/github-reusable-workflows/.github/actions/build-classicube-plugin@78cca1708ee40ff0f5cab7b971204653ddefcca0 # main
+      - uses: SpiralP/github-reusable-workflows/.github/actions/build-classicube-plugin@14f3ff0a30de650ab794eecf41a03f1f9d702822 # main
         with:
           arch: ${{ matrix.config.arch }}
           target: ${{ matrix.config.target }}
@@ -86,7 +86,7 @@ jobs:
           - { arch: x86_64, target: x86_64-apple-darwin }
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: SpiralP/github-reusable-workflows/.github/actions/build-classicube-plugin@78cca1708ee40ff0f5cab7b971204653ddefcca0 # main
+      - uses: SpiralP/github-reusable-workflows/.github/actions/build-classicube-plugin@14f3ff0a30de650ab794eecf41a03f1f9d702822 # main
         with:
           arch: ${{ matrix.config.arch }}
           target: ${{ matrix.config.target }}
