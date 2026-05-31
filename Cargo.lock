@@ -201,7 +201,7 @@ dependencies = [
  "async-dispatcher",
  "backtrace",
  "classicube-helpers",
- "classicube-sys 5.0.0+ClassiCube.1.3.8",
+ "classicube-sys",
  "futures",
  "futures-timer",
  "lazy_static",
@@ -220,28 +220,15 @@ dependencies = [
 [[package]]
 name = "classicube-helpers"
 version = "4.0.1+ClassiCube.1.3.8"
-source = "git+https://github.com/SpiralP/rust-classicube-helpers.git?branch=main#ff0c0a611532cef57c4599863f1bf80a3a59d5b3"
+source = "git+https://github.com/SpiralP/rust-classicube-helpers.git?branch=main#d1565acd7bbdc3da4088f02e91d50d80d27fcb64"
 dependencies = [
  "async-dispatcher",
- "classicube-sys 6.0.4+ClassiCube.1.3.8",
+ "classicube-sys",
  "futures",
  "futures-timer",
  "paste",
  "tokio",
  "tracing",
-]
-
-[[package]]
-name = "classicube-sys"
-version = "5.0.0+ClassiCube.1.3.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ff8b288cd38f7685b2de04f754bb679d212fc6b1f497100ca014cb842da050f"
-dependencies = [
- "bindgen",
- "cc",
- "fs_extra",
- "paste",
- "regex",
 ]
 
 [[package]]
@@ -1232,9 +1219,9 @@ checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
 
 [[package]]
 name = "reqwest"
-version = "0.13.3"
+version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62e0021ea2c22aed41653bc7e1419abb2c97e038ff2c33d0e1309e49a97deec0"
+checksum = "219c5811de6525e5416c7d5d53bb656d3afdbc6c5af816e0802bcfa42dbdc1c3"
 dependencies = [
  "base64",
  "bytes",
