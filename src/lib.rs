@@ -6,9 +6,9 @@ mod updater;
 
 use std::{cell::Cell, ffi::CString, fs, os::raw::c_int, ptr};
 
-use classicube_helpers::async_manager;
+use classicube_helpers::{async_manager, chat::print};
 use classicube_sys::{
-    Chat_Add, Chat_AddOf, IGameComponent, MsgType_MSG_TYPE_CLIENTSTATUS_2, OwnedString, Server,
+    Chat_AddOf, IGameComponent, MsgType_MSG_TYPE_CLIENTSTATUS_2, OwnedString, Server,
     String_AppendConst,
 };
 use tracing::*;
@@ -126,21 +126,6 @@ pub static mut Plugin_Component: IGameComponent = IGameComponent {
     // Next component in linked list of components.
     next: ptr::null_mut(),
 };
-
-pub fn print<S: Into<String>>(s: S) {
-    let mut s = s.into();
-    info!("{}", s);
-
-    if s.len() > 255 {
-        s.truncate(255);
-    }
-
-    let owned_string = OwnedString::new(s);
-
-    unsafe {
-        Chat_Add(owned_string.as_cc_string());
-    }
-}
 
 pub fn status<S: Into<String>>(s: S) {
     let mut s = s.into();
