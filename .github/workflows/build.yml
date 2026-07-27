@@ -21,7 +21,7 @@ jobs:
     # `build` job already validated nix against this commit minutes earlier,
     # and the nix output isn't attached to the GitHub release.
     if: ${{ github.event_name != 'workflow_dispatch' }}
-    uses: SpiralP/github-reusable-workflows/.github/workflows/build.yml@7c94f777785f44d81986424ce1eeed1cd2e45c3d # main
+    uses: SpiralP/github-reusable-workflows/.github/workflows/build.yml@baee705bbbf99b378dea1cc50e0daf016c18a1d6 # main
 
   windows:
     name: Build Windows ${{ matrix.config.arch }}
@@ -33,8 +33,8 @@ jobs:
           - { arch: x86_64, target: x86_64-pc-windows-msvc }
           - { arch: i686, target: i686-pc-windows-msvc }
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      - uses: SpiralP/github-reusable-workflows/.github/actions/build-classicube-plugin@7c94f777785f44d81986424ce1eeed1cd2e45c3d # main
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: SpiralP/github-reusable-workflows/.github/actions/build-classicube-plugin@baee705bbbf99b378dea1cc50e0daf016c18a1d6 # main
         with:
           arch: ${{ matrix.config.arch }}
           target: ${{ matrix.config.target }}
@@ -52,7 +52,7 @@ jobs:
           - { arch: armhf, target: armv7-unknown-linux-gnueabihf }
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install x86_64 deps
         if: ${{ matrix.config.arch == 'x86_64' }}
         run: |
@@ -69,7 +69,7 @@ jobs:
             libssl-dev:i386 \
             libssl3:i386
           echo "PKG_CONFIG_ALLOW_CROSS=1" >> "$GITHUB_ENV"
-      - uses: SpiralP/github-reusable-workflows/.github/actions/build-classicube-plugin@7c94f777785f44d81986424ce1eeed1cd2e45c3d # main
+      - uses: SpiralP/github-reusable-workflows/.github/actions/build-classicube-plugin@baee705bbbf99b378dea1cc50e0daf016c18a1d6 # main
         with:
           arch: ${{ matrix.config.arch }}
           target: ${{ matrix.config.target }}
@@ -85,8 +85,8 @@ jobs:
           - { arch: aarch64, target: aarch64-apple-darwin }
           - { arch: x86_64, target: x86_64-apple-darwin }
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      - uses: SpiralP/github-reusable-workflows/.github/actions/build-classicube-plugin@7c94f777785f44d81986424ce1eeed1cd2e45c3d # main
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: SpiralP/github-reusable-workflows/.github/actions/build-classicube-plugin@baee705bbbf99b378dea1cc50e0daf016c18a1d6 # main
         with:
           arch: ${{ matrix.config.arch }}
           target: ${{ matrix.config.target }}
