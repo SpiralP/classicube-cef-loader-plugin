@@ -118,7 +118,14 @@ pub async fn update(cef_binary_version: &str) -> Result<bool> {
                 .with_context(|| format!("write {CEF_BINARY_VERSION_PATH}"))?;
         }
 
-        print_async(format!("{}CEF Binary finished downloading", color::LIME)).await;
+        print_async(format!(
+            "{}Updated to {}{} {}",
+            color::LIME,
+            color::GREEN,
+            "CEF Binary",
+            cef_binary_version
+        ))
+        .await;
 
         // remove old cef binary caches
         if Path::new(CEF_CACHE_PATH).is_dir() {
@@ -163,22 +170,6 @@ async fn download(cef_binary_version: &str) -> Result<()> {
     let response = make_client().get(&url).send().await?.error_for_status()?;
 
     let maybe_content_length = response.content_length();
-
-    if let Some(content_length) = maybe_content_length {
-        print_async(format!(
-            "{}Downloading {}{} {}({}{}MB{})",
-            color::GOLD,
-            //
-            color::GREEN,
-            "CEF Binary",
-            color::GOLD,
-            //
-            color::GREEN,
-            (content_length as f32 / 1024f32 / 1024f32).ceil() as u32,
-            color::GOLD,
-        ))
-        .await;
-    }
 
     {
         let running = Arc::downgrade(&running);

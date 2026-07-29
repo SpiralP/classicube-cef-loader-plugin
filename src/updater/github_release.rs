@@ -170,25 +170,12 @@ impl GitHubReleaseChecker {
                 .unwrap_or(true);
 
         if needs_update {
-            print_async(format!(
-                "{}New release update {}{} {}for {}{}!",
-                color::PINK,
-                color::GREEN,
-                self.release.tag_name,
-                color::PINK,
-                color::LIME,
-                self.name
-            ))
-            .await;
-
             self.update_assets(&self.release).await?;
 
             {
                 // mark that we updated
                 fs::write(&self.version_path(), &self.release.published_at).await?;
             }
-
-            print_async(format!("{}{} finished downloading", color::LIME, self.name)).await;
 
             Ok(true)
         } else {
@@ -204,20 +191,6 @@ impl GitHubReleaseChecker {
                 .iter()
                 .find(|asset| asset.name == spec.asset_name)
                 .with_context(|| format!("couldn't find asset {}", spec.asset_name))?;
-
-            print_async(format!(
-                "{}Downloading {}{} {}({}{}MB{})",
-                color::GOLD,
-                //
-                color::GREEN,
-                asset.name,
-                color::GOLD,
-                //
-                color::GREEN,
-                (asset.size as f32 / 1024f32 / 1024f32).ceil() as u32,
-                color::GOLD,
-            ))
-            .await;
 
             let wanted_path = spec.dest_path.clone();
             let new_path = new_path_for(&wanted_path);
@@ -260,10 +233,11 @@ impl GitHubReleaseChecker {
             fs::rename(&new_path, &wanted_path).await?;
 
             print_async(format!(
-                "{}Finished downloading {}{}",
+                "{}Updated to {}{} {}",
                 color::GOLD,
                 color::GREEN,
                 asset.name,
+                release.tag_name
             ))
             .await;
         }
@@ -305,7 +279,6 @@ pub struct GitHubRelease {
 pub struct GitHubReleaseAsset {
     pub browser_download_url: String,
     pub name: String,
-    pub size: usize,
 }
 
 #[ignore]
