@@ -14,7 +14,7 @@ async-dispatcher = { git = "https://github.com/SpiralP/rust-async-dispatcher.git
 backtrace = "=0.3.76"
 classicube-helpers = { git = "https://github.com/SpiralP/rust-classicube-helpers.git", branch = "main" }
 classicube-sys = "=6.0.4"
-futures = "=0.3.33"
+futures = "=0.3.34"
 futures-timer = "=3.0.4"
 lazy_static = "=1.5.0"
 reqwest = { version = "=0.13.4", features = ["json", "stream"] }
