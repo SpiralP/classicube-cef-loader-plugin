@@ -1,6 +1,6 @@
 [package]
 name = "classicube-cef-loader-plugin"
-version = "2.1.108"
+version = "2.1.109"
 edition = "2024"
 publish = false
 
